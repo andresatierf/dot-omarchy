@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -e
+
+# Check if flatpak is installed, install it with yay if not
+if ! command -v flatpak &>/dev/null; then
+  echo "Flatpak is not installed. Installing it with yay..."
+  yay -S flatpak
+  echo "Flatpak installed. A restart is required to continue. Please restart your system and run the script again."
+  exit 0
+fi
+
+fzf_args=(
+  --multi
+  --preview 'flatpak remote-info flathub {1}'
+  --preview-label='echo "alt-p: toggle description, alt-j/k: scroll, F11: maximize"'
+  --preview-label-pos='bottom'
+  --preview-window 'down:65%:wrap'
+  --bind 'alt-p:toggle-preview'
+  --bind 'alt-d:preview-half-page-down,alt-u:preview-half-page-up'
+  --bind 'alt-k:preview-up,alt-j:preview-down'
+)
+
+pkg_names=$(flatpak remote-ls flathub --columns=application,name | fzf "${fzf_args[@]}")
+
+if [[ -n "$pkg_names" ]]; then
+  # Convert newline-separated selections to space-separated for yay
+  echo "$pkg_names" | tr '\n' ' ' | xargs flatpak install -y flathub
+  sudo updatedb
+  omarchy-show-done
+fi
