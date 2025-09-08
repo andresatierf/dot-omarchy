@@ -21,7 +21,7 @@ fzf_args=(
   --bind 'alt-k:preview-up,alt-j:preview-down'
 )
 
-pkg_names=$(flatpak remote-ls flathub --columns=application,name | fzf "${fzf_args[@]}")
+pkg_names=$(flatpak remote-ls flathub --columns=application | fzf "${fzf_args[@]}")
 
 if [[ -n "$pkg_names" ]]; then
   # Convert newline-separated selections to space-separated for yay
