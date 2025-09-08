@@ -1,0 +1,13 @@
+#!/bin/zsh
+
+if [ "$1" = '--root' ]; then
+	local as_root='true'
+	shift
+fi
+
+local prefix=''
+
+if [ "${as_root}" = 'true' ] && [ "${USER}" != 'root' ]; then
+	prefix="sudo"
+fi
+confirm ${prefix} "$@"

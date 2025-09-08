@@ -1,0 +1,68 @@
+#!/bin/zsh
+
+# Custom modules location (local)
+andresatierf="$HOME/.zsh"
+
+# -----------------------------------------------------
+# Modules
+# -----------------------------------------------------
+# zmodule joke/zim-mise
+zmodule $andresatierf/plugins/mise
+
+zmodule environment
+zmodule git
+zmodule input
+zmodule termtitle
+zmodule utility
+
+zmodule pacman
+zmodule homebrew
+
+zmodule archive
+zmodule ssh
+# zmodule fzf
+zmodule $andresatierf/plugins/fzf
+zmodule exa
+
+zmodule joke/zim-kubectl
+
+zmodule $andresatierf/exports
+zmodule $andresatierf/path
+zmodule $andresatierf/opts
+zmodule $andresatierf/plugins/vivid
+
+zmodule $andresatierf/aliases/safety
+zmodule $andresatierf/aliases/better-defaults
+zmodule $andresatierf/aliases
+
+zmodule $andresatierf/plugins/gh
+zmodule $andresatierf/plugins/bat
+zmodule $andresatierf/plugins/fd
+zmodule $andresatierf/plugins/delta
+zmodule $andresatierf/plugins/zoxide
+
+# -----------------------------------------------------
+# Prompt
+# -----------------------------------------------------
+zmodule $andresatierf/prompt
+
+# -----------------------------------------------------
+# Completion
+# -----------------------------------------------------
+zmodule zsh-users/zsh-completions --fpath src
+zmodule completion
+
+# Must come after completion to setup more app completions
+zmodule $andresatierf/plugins/fnm
+zmodule $andresatierf/plugins/rbw
+zmodule $andresatierf/plugins/hypr
+
+# -----------------------------------------------------
+# Modules that must be initialized last
+# -----------------------------------------------------
+# zsh-users/zsh-syntax-highlighting must be sourced after completion
+zmodule zsh-users/zsh-syntax-highlighting
+# zsh-users/zsh-history-substring-search must be sourced after zsh-users/zsh-syntax-highlighting
+zmodule zsh-users/zsh-history-substring-search
+# Must be last module
+zmodule zsh-users/zsh-autosuggestions

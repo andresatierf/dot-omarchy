@@ -1,0 +1,18 @@
+#!/bin/zsh
+
+local pid
+pid=$(jobs -l | fzf --ansi --header="Select a job to kill" | awk '{print $3}')
+
+# Exit early if no selection
+if [[ -z "$pid" ]]; then
+  echo "No job selected."
+  return 1
+fi
+
+echo "Kill job PID $pid with (1) normal kill or (2) force kill?"
+read -r choice
+if [[ "$choice" == "2" ]]; then
+  kill -9 "$pid"
+else
+  kill "$pid"
+fi

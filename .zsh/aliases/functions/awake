@@ -1,0 +1,3 @@
+#!/bin/zsh
+
+while true; do /usr/local/bin/ydotool key 185:1 185:0; sleep 60; done

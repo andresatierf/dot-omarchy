@@ -1,0 +1,3 @@
+#!/bin/zsh
+
+[[ -n $(dirname "$2") ]] && mkdir -p $(dirname "$2") && mv "$1" "$2"

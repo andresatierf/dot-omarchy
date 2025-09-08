@@ -1,0 +1,3 @@
+#!/bin/zsh
+
+confirm_wrapper --root $0 "$@"

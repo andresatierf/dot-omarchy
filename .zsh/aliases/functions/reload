@@ -1,0 +1,7 @@
+#!/bin/zsh
+
+[ "$1" = "force" ] && zimfw clean
+
+zimfw init
+
+exec "${SHELL}" "$@"

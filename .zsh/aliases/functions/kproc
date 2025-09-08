@@ -1,0 +1,18 @@
+#!/bin/zsh
+
+local pid
+pid=$(ps ax -eo pid,comm,args --sort=-%cpu | fzf --ansi --header="Select a process to kill" | awk '{print $1}')
+
+# Exit early if no selection
+if [[ -z "$pid" ]]; then
+  echo "No process selected."
+  return 0
+fi
+
+echo "Kill PID $pid with (1) normal kill or (2) force kill?"
+read -r choice
+if [[ "$choice" == "2" ]]; then
+  kill -9 "$pid"
+else
+  kill "$pid"
+fi
