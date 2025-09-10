@@ -83,11 +83,13 @@ HISTFILE=~/.zsh_history
 
 # Show system information at login when not in multiplexer
 if { [ -t 0 ] && [ -z "$TMUX" ] && [ -z "$ZELLIJ" ]; } then
+    return 0
     if type -p "neofetch" > /dev/null; then
         neofetch
         return 0
     fi
     if type -p "fastfetch" > /dev/null; then
         fastfetch
+        return 0
     fi
 fi

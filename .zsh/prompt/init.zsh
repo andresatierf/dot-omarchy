@@ -10,16 +10,14 @@
   if [[ ! -e $initfile || $initfile -ot $command || $initfile -ot $HOME/.zshrc ]]; then
     local theme
     zstyle -a ":user:prompt:theme" theme "theme"
-    $command init zsh --config ~/.config/ohmyposh/$theme.yaml >| $initfile
+    local config="$HOME/.config/ohmyposh/$theme.yaml"
+    if [[ -f $config ]]; then
+      $command init zsh --config $config >| $initfile
+    else
+      $command init zsh >| $initfile
+    fi
     print -u2 -PR "* [oh-my-posh] Detected a change to .zshrc. Regenerated init file."
     zcompile -UR $initfile
-  fi
-
-  # generating completions
-  local compfile=$1/functions/_oh-my-posh
-  if [[ ! -e $compfile || $compfile -ot $command ]]; then
-    $command completion zsh >| $compfile
-    print -u2 -PR "* [oh-my-posh] Detected a new version 'oh-my-posh'. Regenerated completions."
   fi
 
   source $initfile
