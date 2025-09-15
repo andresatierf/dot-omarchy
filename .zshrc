@@ -21,9 +21,7 @@ ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets)
 
 # ssh
 zstyle ':zim:ssh' ids \
-    'id_rsa' \
-    'github_ed25519' \
-    'tartarus_ed25519'
+    'id_ed25519'
 
 # path
 zstyle ':zim:path' paths \

@@ -43,7 +43,7 @@ zmodule $andresatierf/plugins/zoxide
 # -----------------------------------------------------
 # Prompt
 # -----------------------------------------------------
-zmodule $andresatierf/prompt
+zmodule $andresatierf/prompt/starship
 
 # -----------------------------------------------------
 # Completion
