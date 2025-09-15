@@ -5,7 +5,7 @@ secondary_prompt:
   foreground: magenta
   background: transparent
 transient_prompt:
-  template: "<cyan>{{ .Path }}</> ❯ "
+  template: "❯ "
   background: transparent
   foreground_templates:
   - "{{if gt .Code 0}}red{{end}}"
