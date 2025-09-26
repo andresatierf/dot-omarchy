@@ -1,0 +1,47 @@
+[[profile]]
+name = "laptop"
+exec = [
+  "notify-send \"💻 shikane\" \"Profile $SHIKANE_PROFILE_NAME has been applied\"",
+]
+
+[[profile.output]]
+enable = false
+search = ["m=0x40A9", "s=", "v=Lenovo Group Limited"]
+mode = "1920x1080@60.02Hz"
+position = "0,0"
+scale = 1.5
+transform = "normal"
+adaptive_sync = false
+
+[[profile]]
+name = "desktop"
+exec = [
+  "notify-send \"🖥️ shikane\" \"Profile $SHIKANE_PROFILE_NAME has been applied\"",
+]
+
+[[profile.output]]
+enable = true
+search = ["m=OZDSP27IPS", "s=", "v=WAM"]
+mode = "2560x1440@59.951Hz"
+position = "0,0"
+scale = 1.0
+transform = "normal"
+adaptive_sync = false
+
+[[profile.output]]
+enable = false
+search = ["m=0x40A9", "s=", "v=Lenovo Group Limited"]
+mode = "1920x1080@60.02Hz"
+position = "0,0"
+scale = 1.5
+transform = "normal"
+adaptive_sync = false
+
+[[profile.output]]
+enable = true
+search = ["m=OZDSP27IPS", "s=", "v=WAM"]
+mode = "2560x1440@59.951Hz"
+position = "2560,0"
+scale = 1.0
+transform = "normal"
+adaptive_sync = false
