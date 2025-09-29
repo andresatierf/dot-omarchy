@@ -1,7 +1,7 @@
 [[profile]]
 name = "laptop"
 exec = [
-  "notify-send \"💻 shikane\" \"Profile $SHIKANE_PROFILE_NAME has been applied\"",
+  "notify-send \"💻 shikane\" \"Profile '$SHIKANE_PROFILE_NAME' has been applied\"",
 ]
 
 [[profile.output]]
@@ -16,12 +16,12 @@ adaptive_sync = false
 [[profile]]
 name = "desktop"
 exec = [
-  "notify-send \"🖥️ shikane\" \"Profile $SHIKANE_PROFILE_NAME has been applied\"",
+  "notify-send \"🖥️ shikane\" \"Profile '$SHIKANE_PROFILE_NAME' has been applied\"",
 ]
 
 [[profile.output]]
 enable = true
-search = ["m=OZDSP27IPS", "s=", "v=WAM"]
+search = ["DP-3", "m=OZDSP27IPS", "s=", "v=WAM"]
 mode = "2560x1440@59.951Hz"
 position = "0,0"
 scale = 1.0
@@ -39,7 +39,7 @@ adaptive_sync = false
 
 [[profile.output]]
 enable = true
-search = ["m=OZDSP27IPS", "s=", "v=WAM"]
+search = ["HDMI-A-1", "m=OZDSP27IPS", "s=", "v=WAM"]
 mode = "2560x1440@59.951Hz"
 position = "2560,0"
 scale = 1.0
