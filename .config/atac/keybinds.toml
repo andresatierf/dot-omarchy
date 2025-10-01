@@ -10,25 +10,21 @@ move_request_up = "Ctrl-k"
 move_request_down = "Ctrl-j"
 
 next_environment = "Shift-E"
-display_env_editor = "Ctrl-E"
 display_cookies = "Shift-C"
-display_logs = "Shift-L"
 
 [keybindings.generic]
 display_help = "Shift-h" # Take care to not overlap other inputs, the help can be triggered from anywhere
 
 # Collection name, request name, URL, Header, Query param, Basic Auth, Bearer Token
 [keybindings.generic.text_inputs.text_input]
-confirm = "Enter"
 cancel = "Esc"
+validate = "Enter"
 
 delete_backward = "Delete"
 delete_forward = "Backspace"
 
 move_cursor_left = "Ctrl-h"
 move_cursor_right = "Ctrl-l"
-move_cursor_line_start = "Home"
-move_cursor_line_end = "End"
 
 # Request body
 [keybindings.generic.text_inputs]
@@ -57,10 +53,9 @@ select = "Enter"
 [keybindings.generic.list_and_table_actions]
 create_element = "Shift-N"
 delete_element = "Shift-D"
-edit_element = "Enter" # Edit query param, header, basic auth, bearer token
+edit_element = "Enter"     # Edit query param, header, basic auth, bearer token
 rename_element = "Shift-R" # Only used in the collections list (main menu)
 toggle_element = "Shift-T" # Only used in tables (Query params, headers, cookies)
-duplicate_element = "Shift-Y"
 
 [keybindings.request_selected]
 param_next_tab = "t"
@@ -73,8 +68,6 @@ next_view = "Shift-V"
 
 send_request = "Space"
 alt_send_request = "Ctrl-Enter"
-
-export_request = "Ctrl-e"
 
 [keybindings.request_selected.param_tabs]
 change_auth_method = "Shift-A"
