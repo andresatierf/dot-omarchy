@@ -1,9 +1,7 @@
 ;; vim: set ft=lisp
-#|
 (defcfg
   process-unmapped-keys yes
 )
-|#
 
 (defsrc
   grv  1    2    3    4    5    6    7    8    9    0    -    =    bspc
@@ -22,7 +20,9 @@
 )
 
 (defvar
+  ;; timeout for double taping a key for repeat. eg. aaaaaaaaaa
   tap-time 150
+  ;; timeout to get the hold behaviour. eg. SUPER
   hold-time 200
 )
 

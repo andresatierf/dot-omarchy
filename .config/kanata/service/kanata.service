@@ -1,11 +1,12 @@
 [Unit]
-Description=Kanata Service
-# Requires=local-fs.target
-# After=local-fs.target
+Description=kanata
+Requires=local-fs.target
+After=local-fs.target
 
 [Service]
-# ExecStartPre=/usr/bin/modprobe uinput
+ExecStartPre=/usr/bin/modprobe uinput
 ExecStart=/usr/bin/kanata -c /home/andre/.config/kanata/home-row-mods.kbd
+Restart=no
 
 [Install]
 WantedBy=multi-user.target
