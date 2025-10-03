@@ -8,6 +8,7 @@
   # generating completions
   local compfile=$1/functions/_delta
   if [[ ! -e $compfile || $compfile -ot $command ]]; then
+    mkdir -p "$(dirname $compfile)"
     $command --generate-completion zsh >| $compfile
     print -u2 -PR "* [delta] Detected a new version 'delta'. Regenerated completions."
   fi

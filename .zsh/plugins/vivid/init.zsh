@@ -1,7 +1,6 @@
 #!/bin/zsh
 
 (( ${+commands[vivid]} || ${+commands[mise]} )) && () {
-
   local command=${commands[vivid]:-"$(${commands[mise]} which vivid 2> /dev/null)"}
   [[ -z $command ]] && return 1
 

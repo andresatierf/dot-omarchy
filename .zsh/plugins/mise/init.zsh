@@ -16,6 +16,7 @@ local mise_path="$HOME/.local/bin/mise"
   # generating completions
   local compfile=$1/functions/_mise
   if [[ ! -e $compfile || $compfile -ot $command ]]; then
+    mkdir -p "$(dirname $compfile)"
     $command complete --shell zsh >| $compfile
     print -u2 -PR "* [mise] Detected a new version 'mise'. Regenerated completions."
   fi

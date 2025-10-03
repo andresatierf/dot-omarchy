@@ -1,7 +1,6 @@
 #!/bin/zsh
 
 (( ${+commands[zoxide]} || ${+commands[mise]} )) && () {
-
   local command=${commands[zoxide]:-"$(${commands[mise]} which zoxide 2> /dev/null)"}
   [[ -z $command ]] && return 1
 
