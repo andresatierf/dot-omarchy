@@ -39,6 +39,7 @@ zmodule $andresatierf/plugins/gh
 zmodule $andresatierf/plugins/bat
 zmodule $andresatierf/plugins/delta
 zmodule $andresatierf/plugins/tailscale
+zmodule $andresatierf/plugins/restic
 zmodule $andresatierf/plugins/zellij
 zmodule $andresatierf/plugins/zoxide
 
