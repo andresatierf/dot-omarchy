@@ -21,7 +21,7 @@ exec = [
 ]
 mode = "1920x1080@60.02Hz"
 position = "0,0"
-scale = 1.5
+scale = 1
 transform = "normal"
 adaptive_sync = false
 
