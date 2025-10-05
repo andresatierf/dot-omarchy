@@ -38,7 +38,7 @@ enable = false
 
 # left display
 [[profile.output]]
-search = ["DP-[1-9]", "m=OZDSP27IPS", "s=", "v=WAM"]
+search = ["/DP-[1-9]", "m=OZDSP27IPS", "s=", "v=WAM"]
 enable = true
 exec = [
   "hyprctl dispatch moveworkspacetomonitor 4 $SHIKANE_OUTPUT_NAME",
