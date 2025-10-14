@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if pgrep -x kanata >/dev/null; then
+  sudo systemctl stop kanata
+else
+  sudo systemctl restart kanata
+fi
