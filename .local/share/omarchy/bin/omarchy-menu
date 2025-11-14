@@ -86,10 +86,11 @@ show_learn_menu() {
 }
 
 show_trigger_menu() {
-  case $(menu "Trigger" "  Capture\n  Share\n󰔎  Toggle") in
+  case $(menu "Trigger" "  Capture\n  Share\n󰔎  Toggle\n󰍹  Shikane") in
   *Capture*) show_capture_menu ;;
   *Share*) show_share_menu ;;
   *Toggle*) show_toggle_menu ;;
+  *Shikane*) shikanectl reload ;;
   *) show_main_menu ;;
   esac
 }
@@ -405,13 +406,12 @@ show_update_menu() {
 }
 
 show_update_process_menu() {
-  case $(menu "Restart" "  Hypridle\n  Hyprsunset\n  Swayosd\n󰌧  Walker\n󰍜  Waybar\n󰍹  Shikane") in
+  case $(menu "Restart" "  Hypridle\n  Hyprsunset\n  Swayosd\n󰌧  Walker\n󰍜  Waybar") in
   *Hypridle*) omarchy-restart-hypridle ;;
   *Hyprsunset*) omarchy-restart-hyprsunset ;;
   *Swayosd*) omarchy-restart-swayosd ;;
   *Walker*) omarchy-restart-walker ;;
   *Waybar*) omarchy-restart-waybar ;;
-  *Shikane*) shikanectl reload ;;
   *) show_update_menu ;;
   esac
 }
@@ -479,6 +479,7 @@ go_to_menu() {
   *update*) show_update_menu ;;
   *about*) omarchy-launch-about ;;
   *system*) show_system_menu ;;
+  *shikane*) shikanectl reload ;;
   esac
 }
 
