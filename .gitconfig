@@ -2,5 +2,8 @@
   name = Andre Freitas
   email = andrecfreitas58@gmail.com
 
+[rebase]
+  updateRefs = true
+
 [include]
   path = ~/.config/delta/.gitconfig

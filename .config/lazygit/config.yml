@@ -1,0 +1,184 @@
+gui:
+  # sidePanelWidth: 0.2 # gives you more space to show things side-by-side
+  showIcons: true
+notARepository: "skip" # 'prompt' | 'create' | 'skip'
+git:
+  pagers:
+    - colorArg: always
+      pager: delta --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
+  skipHookPrefix: ""
+# customCommands:
+#   # sync origin/master with upstream/master
+#   - key: "S"
+#     description: sync origin/master with upstream/master
+#     context: "localBranches"
+#     command: "git pull upstream $(git remote show origin | sed -n '/HEAD branch/s/.*: //p') && git push origin $(git remote show origin | sed -n '/HEAD branch/s/.*: //p')"
+#   # create branch
+#   - key: "N"
+#     description: new branch options...
+#     context: "localBranches"
+#     loadingText: "creating branch"
+#     prompts:
+#       - type: "menu"
+#         title: "What kind of branch is it?"
+#         options:
+#           - name: "feat"
+#             description: "a feature branch"
+#             value: "feat"
+#           - name: "fix"
+#             description: "a fix branch"
+#             value: "fix"
+#           - name: "chore"
+#             description: "a chore branch"
+#             value: "chore"
+#       - type: "input"
+#         title: "What is the new branch name?"
+#         initialValue: ""
+#     command: "git checkout -b andre/{{index .PromptResponses 0}}/{{index .PromptResponses 1}}"
+#   # fetch all remotes
+#   - key: "F"
+#     description: fetch all remotes
+#     context: "remotes"
+#     command: git fetch --all && git pull --all
+#   # push up to commit
+#   - key: P
+#     description: push up to this commit
+#     context: commits
+#     prompts:
+#       - type: confirm
+#         title: Push through a specific commit
+#         body: Push commit {{.SelectedLocalCommit.Sha}} to remote {{.CheckedOutBranch.UpstreamRemote}}/{{.CheckedOutBranch.UpstreamBranch}}?
+#     loadingText: pushing commit {{.SelectedLocalCommit.Sha}}
+#     command: git push {{.CheckedOutBranch.UpstreamRemote}} {{.SelectedLocalCommit.Sha}}:{{.CheckedOutBranch.UpstreamBranch}}
+#   # merge up to commit
+#   - key: M
+#     description: merge up to this commit into checked out branch
+#     context: subCommits
+#     prompts:
+#       - type: confirm
+#         title: Merge commit?
+#         body: Merge commit {{.SelectedSubCommit.Sha}} to {{.CheckedOutBranch.UpstreamBranch}}?
+#     loadingText: merging commit {{.SelectedSubCommit.Sha}}
+#     command: git merge {{.SelectedSubCommit.Sha}}
+#
+#   # create branch
+#   - key: "N"
+#     description: new branch options... [custom]
+#     context: "localBranches"
+#     loadingText: "creating branch"
+#     prompts:
+#       - type: "menu"
+#         title: "What kind of branch is it?"
+#         options:
+#           - name: "feat"
+#             description: "a feature branch"
+#             value: "feat"
+#           - name: "fix"
+#             description: "a fix branch"
+#             value: "fix"
+#           - name: "chore"
+#             description: "a chore branch"
+#             value: "chore"
+#       - type: "input"
+#         title: "What is the new branch name?"
+#         initialValue: ""
+#     command: "git checkout -b andre/{{index .PromptResponses 0}}/{{index .PromptResponses 1}}"
+#   # fetch all remotes
+#   - key: "F"
+#     description: fetch all remotes [custom]
+#     context: "remotes"
+#     command: git fetch --all && git pull --all
+#   # push up to commit
+#   - key: P
+#     description: push up to this commit [custom]
+#     context: commits
+#     prompts:
+#       - type: confirm
+#         title: Push through a specific commit
+#         body: Push commit {{.SelectedLocalCommit.Sha}} to remote {{.CheckedOutBranch.UpstreamRemote}}/{{.CheckedOutBranch.UpstreamBranch}}?
+#     loadingText: pushing commit {{.SelectedLocalCommit.Sha}}
+#     command: git push {{.CheckedOutBranch.UpstreamRemote}} {{.SelectedLocalCommit.Sha}}:{{.CheckedOutBranch.UpstreamBranch}}
+#   # merge up to commit
+#   - key: M
+#     description: merge up to this commit into checked out branch [custom]
+#     context: subCommits
+#     prompts:
+#       - type: confirm
+#         title: Merge commit?
+#         body: Merge commit {{.SelectedSubCommit.Sha}} to {{.CheckedOutBranch.UpstreamBranch}}?
+#     loadingText: merging commit {{.SelectedSubCommit.Sha}}
+#     command: git merge {{.SelectedSubCommit.Sha}}
+#   - key: "C"
+#     command: |
+#       git commit -m "{{ .Form.Type }}{{if .Form.Scopes}}({{ .Form.Scopes }}){{end}}{{if eq .Form.Breaking `yes`}}!{{end}}: {{ .Form.Description }}"
+#       {{- if .Form.LongDescription }}
+#       -m "{{ .Form.LongDescription }}" \
+#       {{- end }}
+#     description: "commit with conventional commits [custom]"
+#     context: "files"
+#     prompts:
+#       - type: "menu"
+#         title: "Select the type of change you are committing."
+#         key: "Type"
+#         options:
+#           - name: "Feature"
+#             description: "A new feature"
+#             value: "feat"
+#           - name: "Fix"
+#             description: "A bug fix"
+#             value: "fix"
+#           - name: "Documentation"
+#             description: "Documentation only changes"
+#             value: "docs"
+#           - name: "Styles"
+#             description: "Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)"
+#             value: "style"
+#           - name: "Code Refactoring"
+#             description: "A code change that neither fixes a bug nor adds a feature"
+#             value: "refactor"
+#           - name: "Performance Improvements"
+#             description: "A code change that improves performance"
+#             value: "perf"
+#           - name: "Tests"
+#             description: "Adding missing tests or correcting existing tests"
+#             value: "test"
+#           - name: "Builds"
+#             description: "Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)"
+#             value: "build"
+#           - name: "Continuous Integration"
+#             description: "Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)"
+#             value: "ci"
+#           - name: "Chores"
+#             description: "Other changes that don't modify src or test files"
+#             value: "chore"
+#           - name: "Reverts"
+#             description: "Reverts a previous commit"
+#             value: "revert"
+#       - type: "input"
+#         title: "Enter the scope(s) of this change."
+#         key: "Scopes"
+#       - type: "input"
+#         title: "Enter the short description of the change."
+#         key: "Description"
+#       - type: "input"
+#         title: "Enter a more detailed description (optional)."
+#         key: "LongDescription"
+#       - type: "menu"
+#         title: "Is this a breaking change?"
+#         key: "Breaking"
+#         options:
+#           - name: "No"
+#             description: "This change does not introduce a breaking change."
+#             value: "no"
+#           - name: "Yes"
+#             description: "This change introduces a breaking change."
+#             value: "yes"
+#       - type: "confirm"
+#         title: "Is the commit message correct?"
+#         body: |
+#           {{ .Form.Type }}{{if .Form.Scopes}}({{ .Form.Scopes }}){{end}}{{if eq .Form.Breaking `yes`}}!{{end}}: {{ .Form.Description }}
+#           {{- if .Form.LongDescription }}
+#
+#           {{ .Form.LongDescription }}
+#           {{- end }}
+#           {{- if .Form.BreakingChange }}
