@@ -1,0 +1,47 @@
+# vi: ft=gitconfig
+
+[delta "current-theme"]
+  # Diff line styles
+  plus-style                    = "#40a02b" "#e8f5e3"
+  plus-non-emph-style           = "#40a02b" "#e8f5e3"
+  plus-emph-style               = "#40a02b" "#d5efd0"
+  plus-empty-line-marker-style  = "#40a02b" "#e8f5e3"
+
+  minus-style                   = "#d20f39" "#fceaed"
+  minus-non-emph-style          = "#d20f39" "#fceaed"
+  minus-emph-style              = "#d20f39" "#f8d7dd"
+  minus-empty-line-marker-style = "#d20f39" "#fceaed"
+
+  zero-style                    = "#4c4f69" "#eff1f5"
+
+  # Line number styles
+  line-numbers-left-style       = "#8c8fa1"
+  line-numbers-right-style      = "#8c8fa1"
+  line-numbers-plus-style       = "#40a02b"
+  line-numbers-zero-style       = "#8c8fa1"
+  line-numbers-minus-style      = "#d20f39"
+
+  # Commit styles
+  commit-style                  = "#1e66f5" bold
+  commit-decoration-style       = "#bcc0cc" box
+
+  # File styles
+  file-style                    = "#1e66f5" bold
+  file-decoration-style         = "#1e66f5" ul
+
+  # Hunk header styles
+  hunk-header-style             = file line-number syntax
+  hunk-header-decoration-style  = "#bcc0cc" box
+  hunk-header-file-style        = "#1e66f5"
+  hunk-header-line-number-style = "#40a02b"
+
+  # Misc styles
+  inline-hint-style             = "#8c8fa1"
+  whitespace-error-style        = "#d20f39" reverse
+
+  # Grep styles
+  grep-file-style               = "#1e66f5"
+  grep-line-number-style        = "#40a02b"
+  grep-match-line-style         = "#40a02b" "#e8f5e3"
+  grep-match-word-style         = "#40a02b" "#d5efd0"
+  grep-context-line-style       = "#4c4f69" "#eff1f5"

@@ -1,3 +1,6 @@
 [user]
-	name = Andre Freitas
-	email = andrecfreitas58@gmail.com
+  name = Andre Freitas
+  email = andrecfreitas58@gmail.com
+
+[include]
+  path = ~/.config/delta/.gitconfig
