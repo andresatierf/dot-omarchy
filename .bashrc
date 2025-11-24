@@ -19,3 +19,5 @@ source ~/.local/share/omarchy/default/bash/rc
 export ATAC_KEY_BINDINGS=~/.config/atac/keybinds.toml
 
 # export PATH="$HOME/.config/omarchy/bin:$PATH"
+
+. "$HOME/.local/share/../bin/env"

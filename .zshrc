@@ -91,3 +91,5 @@ if { [ -t 0 ] && [ -z "$TMUX" ] && [ -z "$ZELLIJ" ]; } then
         return 0
     fi
 fi
+
+. "$HOME/.local/share/../bin/env"
