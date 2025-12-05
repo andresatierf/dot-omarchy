@@ -1,14 +1,19 @@
 #!/bin/bash
 
 default_browser=$(xdg-settings get default-web-browser)
+default_browser="chromium.desktop"
 browser_exec=$(sed -n 's/^Exec=\(\/usr\/bin\/flatpak .*\) @@u %u @@/\1/Ip; t; s/^Exec=\([^ ]*\).*/\1/p' {~/.local,~/.nix-profile,/usr,/var/lib/flatpak/exports}/share/applications/$default_browser 2>/dev/null | head -1)
 
+case $default_browser in
+  google-chrome* | brave-browser* | microsoft-edge* | opera* | vivaldi* | helium*) ;;
+  *) default_browser="chromium.desktop" ;;
+esac
+
 if [[ $browser_exec =~ (firefox|zen|librewolf) ]]; then
-  private_flag="--private-window"
+  # currently broken
+  app_flag="--new-window $1"
 else
-  private_flag="--incognito"
+  app_flag="--app=$1"
 fi
 
-echo "${private_flag}"
-
-exec setsid uwsm-app -- $browser_exec "${@/--private/$private_flag}"
+exec setsid uwsm-app -- $browser_exec "${app_flag}" "${@:2}"
