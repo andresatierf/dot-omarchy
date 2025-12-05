@@ -12,6 +12,6 @@
     print -u2 -PR "* [zellij] Detected a new version 'zellij'. Regenerated completions."
   fi
 
-  alias zj="$command a "'$(zellij ls | fzf -- --header="Select a zellij session" --accept-nth 1)'
-  alias zja="$command a"
+  alias zj="$command"
+  alias zja="$command a "'$(zellij ls | fzf -- --header="Select a zellij session" --accept-nth 1)'
 } ${0:h}
