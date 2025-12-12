@@ -13,5 +13,9 @@
   fi
 
   alias zj="$command"
-  alias zja="$command a "'$(zellij ls | fzf -- --header="Select a zellij session" --accept-nth 1)'
+
+  zja() {
+    local session=$(zellij ls -r | fzf -- --header="Select a zellij session" --accept-nth 1)
+    [[ -n $session ]] && $command a "$session" || (echo "No session selected" && return 1)
+  }
 } ${0:h}
