@@ -1,7 +1,7 @@
 #!/bin/zsh
 
 (( ${+commands[zellij]} || ${+commands[mise]} )) && () {
-  local command=${commands[zellij]:-"$(${commands[zellij]} which zellij 2> /dev/null)"}
+  local command=${commands[zellij]:-"$(${commands[mise]} which zellij 2> /dev/null)"}
   [[ -z $command ]] && return 1
 
   # generating completions
@@ -14,8 +14,10 @@
 
   alias zj="$command"
 
+  eval "
   zja() {
-    local session=$(zellij ls -r | fzf -- --header="Select a zellij session" --accept-nth 1)
-    [[ -n $session ]] && $command a "$session" || (echo "No session selected" && return 1)
+    local session=\$(zellij ls -r | fzf -- --header=\"Select a zellij session\" --accept-nth 1)
+    [[ -n \$session ]] && $command a \"\$session\" || (echo \"No session selected\" && return 1)
   }
+  "
 } ${0:h}
