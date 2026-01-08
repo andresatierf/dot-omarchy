@@ -1,3 +1,4 @@
+
 [[profile]]
 name = "laptop"
 exec = [
@@ -24,6 +25,7 @@ position = "0,0"
 scale = 1.0
 transform = "normal"
 adaptive_sync = false
+
 
 [[profile]]
 name = "desktop"
@@ -69,6 +71,7 @@ scale = 1.0
 transform = "normal"
 adaptive_sync = false
 
+
 [[profile]]
 name = "portable"
 exec = [
@@ -102,6 +105,66 @@ exec = [
 ]
 mode = "1920x1080@60.02Hz"
 position = "2560,0"
+scale = 1.0
+transform = "normal"
+adaptive_sync = false
+
+
+[[profile]]
+name = "desktop-left-only"
+exec = [
+  "notify-send \"🖥️🖥️ shikane\" \"Profile '$SHIKANE_PROFILE_NAME' has been applied\"",
+]
+
+# built-in display
+[[profile.output]]
+search = ["m=0x40A9", "s=", "v=Lenovo Group Limited"]
+enable = true
+exec = [
+  "hyprctl dispatch moveworkspacetomonitor 1 $SHIKANE_OUTPUT_NAME",
+  "hyprctl dispatch moveworkspacetomonitor 2 $SHIKANE_OUTPUT_NAME",
+  "hyprctl dispatch moveworkspacetomonitor 3 $SHIKANE_OUTPUT_NAME",
+  "hyprctl dispatch moveworkspacetomonitor 4 $SHIKANE_OUTPUT_NAME",
+  "hyprctl dispatch moveworkspacetomonitor 5 $SHIKANE_OUTPUT_NAME",
+  "hyprctl dispatch moveworkspacetomonitor 6 $SHIKANE_OUTPUT_NAME",
+  "hyprctl dispatch moveworkspacetomonitor 7 $SHIKANE_OUTPUT_NAME",
+  "hyprctl dispatch moveworkspacetomonitor 8 $SHIKANE_OUTPUT_NAME",
+  "hyprctl dispatch moveworkspacetomonitor 9 $SHIKANE_OUTPUT_NAME",
+]
+mode = "1920x1080@60.02Hz"
+position = "0,0"
+scale = 1.0
+transform = "normal"
+adaptive_sync = false
+
+# left display
+[[profile.output]]
+search = ["/DP-[1-9]", "m=OZDSP27IPS", "s=", "v=WAM"]
+enable = true
+mode = "2560x1440@59.951Hz"
+position = "1920,0"
+scale = 1.0
+transform = "normal"
+adaptive_sync = false
+
+
+[[profile]]
+name = "desktop-right-only"
+exec = [
+  "notify-send \"🖥️🖥️ shikane\" \"Profile '$SHIKANE_PROFILE_NAME' has been applied\"",
+]
+
+# built-in display
+[[profile.output]]
+search = ["m=0x40A9", "s=", "v=Lenovo Group Limited"]
+enable = true
+
+# right display
+[[profile.output]]
+search = ["HDMI-A-1", "m=OZDSP27IPS", "s=", "v=WAM"]
+enable = true
+mode = "2560x1440@59.951Hz"
+position = "1920,0"
 scale = 1.0
 transform = "normal"
 adaptive_sync = false
