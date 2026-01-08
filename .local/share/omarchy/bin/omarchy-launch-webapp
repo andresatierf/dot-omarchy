@@ -1,19 +1,12 @@
 #!/bin/bash
 
-default_browser=$(xdg-settings get default-web-browser)
-default_browser="chromium.desktop"
-browser_exec=$(sed -n 's/^Exec=\(\/usr\/bin\/flatpak .*\) @@u %u @@/\1/Ip; t; s/^Exec=\([^ ]*\).*/\1/p' {~/.local,~/.nix-profile,/usr,/var/lib/flatpak/exports}/share/applications/$default_browser 2>/dev/null | head -1)
+# Launch the passed in URL as a web app in the default browser (or chromium if the default doesn't support --app).
 
-case $default_browser in
+browser=$(xdg-settings get default-web-browser)
+
+case $browser in
   google-chrome* | brave-browser* | microsoft-edge* | opera* | vivaldi* | helium*) ;;
-  *) default_browser="chromium.desktop" ;;
+  *) browser="chromium.desktop" ;;
 esac
 
-if [[ $browser_exec =~ (firefox|zen|librewolf) ]]; then
-  # currently broken
-  app_flag="--new-window $1"
-else
-  app_flag="--app=$1"
-fi
-
-exec setsid uwsm-app -- $browser_exec "${app_flag}" "${@:2}"
+exec setsid uwsm-app -- "$(sed -n 's/^Exec=\([^ ]*\).*/\1/p' {~/.local,~/.nix-profile,/usr}/share/applications/"$browser" 2>/dev/null | head -1)" --app="$1" "${@:2}"
