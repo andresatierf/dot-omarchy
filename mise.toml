@@ -1,0 +1,7 @@
+[tasks.dry]
+run = "stow --no-folding --adopt --verbose --simulate ."
+description = "Dry-run stow to check what changes would make"
+
+[tasks.stow]
+run = "stow --no-folding --adopt --verbose ."
+description = "Run stow"
