@@ -1,0 +1,143 @@
+#!/bin/bash
+
+# Remmina Walker Launcher
+# Simple walker-based menu for Remmina profiles
+
+set -euo pipefail
+
+# Configuration
+readonly REMMINA_PATHS=(
+  "$HOME/.local/share/remmina"
+  "$HOME/.remmina"
+)
+
+# Notify function - uses echo if terminal, notify-send otherwise
+notify() {
+  local urgency="$1"
+  local title="$2"
+  local message="$3"
+
+  if [[ -t 1 ]]; then
+    # Running in terminal
+    echo "$title: $message" >&2
+  else
+    # Running from GUI/keybinding
+    notify-send -u "$urgency" "$title" "$message"
+  fi
+}
+
+# Check if remmina exists early
+command -v remmina &>/dev/null || {
+  notify critical "Remmina Error" "Remmina not found"
+  exit 1
+}
+
+# Find profiles directory
+find_profiles_dir() {
+  local path
+  for path in "${REMMINA_PATHS[@]}"; do
+    [[ -d "$path" ]] && { echo "$path"; return 0; }
+  done
+  notify critical "Remmina Error" "No profiles directory found"
+  exit 1
+}
+
+# Get protocol icon
+icon_for_protocol() {
+  case "${1,,}" in
+    rdp) echo "" ;;
+    vnc) echo "" ;;
+    ssh) echo "" ;;
+    sftp) echo "󰉋" ;;
+    spice) echo "" ;;
+    www) echo "󰖟" ;;
+    *) echo "󰢹" ;;
+  esac
+}
+
+# Parse and format a single profile
+format_profile() {
+  local profile="$1"
+  local name="" username="" server="" group="" protocol=""
+
+  # Parse profile file
+  while IFS='=' read -r key value; do
+    case "$key" in
+      name) name="$value" ;;
+      username) username="$value" ;;
+      server) server="$value" ;;
+      group) group="$value" ;;
+      protocol) protocol="${value,,}" ;;
+    esac
+  done <"$profile"
+
+  # Build display components
+  local basename icon title desc
+  basename=$(basename "$profile" .remmina)
+  icon=$(icon_for_protocol "$protocol")
+  title="${name:-$basename}"
+
+  # Build description
+  desc=""
+  [[ -n "$protocol" ]] && desc="${protocol}://"
+  [[ -n "$username" ]] && desc="${desc}${username}@"
+  desc="${desc}${server}"
+  [[ -n "$group" ]] && desc="${desc} [${group}]"
+
+  # Output: display|description|path
+  printf "%s %s|%s|%s\n" "$icon" "$title" "$desc" "$profile"
+}
+
+# Build menu list
+build_menu_list() {
+  local profiles_dir="$1"
+  local profile
+
+  while IFS= read -r -d '' profile; do
+    format_profile "$profile"
+  done < <(find "$profiles_dir" -maxdepth 1 -name "*.remmina" -print0 2>/dev/null | sort -z)
+}
+
+# Launch remmina with selected profile
+launch() {
+  local profile="$1"
+  [[ -f "$profile" ]] || {
+    notify critical "Remmina Error" "Profile not found"
+    exit 1
+  }
+  exec remmina -c "$profile" &>/dev/null
+}
+
+# Show menu using walker
+show_menu() {
+  local profiles_dir="$1"
+  local menu_list selection profile
+
+  menu_list=$(build_menu_list "$profiles_dir")
+
+  [[ -z "$menu_list" ]] && {
+    notify normal "Remmina" "No profiles found"
+    exit 0
+  }
+
+  # Use walker in dmenu mode
+  selection=$(echo "$menu_list" | walker --dmenu \
+    --width 500 \
+    --minheight 1 \
+    --maxheight 630 \
+    -p "Remmina…" \
+    2>/dev/null) || exit 0
+
+  # Extract profile path (third field)
+  profile=$(echo "$selection" | awk -F'|' '{print $3}')
+  launch "$profile"
+}
+
+# Main entry point
+main() {
+  local profiles_dir
+  profiles_dir=$(find_profiles_dir)
+  show_menu "$profiles_dir"
+}
+
+main "$@"

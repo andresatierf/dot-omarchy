@@ -1,0 +1,5 @@
+#!/bin/bash
+
+~/dev/rofi-rbw/.venv/bin/rofi-rbw \
+  --keybindings "Alt+1:type:username:tab:delay:password:enter,Alt+2:type:username,Alt+3:type:password,Alt+4:type:totp,Alt+c:copy:password,Alt+u:copy:username,Alt+t:copy:totp,Alt+m::menu,Alt+s:sync" \
+  --typing-key-delay 5
