@@ -14,11 +14,8 @@ quick_activate = []
 symbols = 1 # providers to be queried by default
 
 [providers]
-max_results = 256 # 256 should be enough for everyone
-default = [
-  "desktopapplications",
-  "websearch",
-]
+max_results = 256                              # 256 should be enough for everyone
+default = ["desktopapplications", "websearch"]
 
 [[providers.prefixes]]
 prefix = "/"
@@ -47,3 +44,14 @@ provider = "clipboard"
 [[emergencies]]
 text = "Restart Walker"
 command = "omarchy-restart-walker"
+
+bitwarden = [
+  { action = "typeusername", label = "type username", bind = "ctrl u" },
+  { action = "typepassword", label = "type password", default = true, bind = "ctrl p" },
+  { action = "typeotp", label = "type 2fa", bind = "ctrl t" },
+  { action = "copyusername", label = "copy username", bind = "shift Return" },
+  { action = "copypassword", label = "copy password", default = true, bind = "Return" },
+  { action = "copyotp", label = "copy 2fa", bind = "ctrl Return" },
+  # { action = "menu", label = "menu", bind = "ctrl m" },
+  { action = "syncvault", label = "sync", bind = "ctrl s" },
+]
