@@ -41,6 +41,24 @@ provider = "websearch"
 prefix = "$"
 provider = "clipboard"
 
+[[providers.prefixes]]
+prefix = "!"
+provider = "menus:rbw"
+hide_action_hints = false
+
+[providers.actions]
+"menus:rbw" = [
+  { action = "copypassword", label = "copy pass", default = true, bind = "Return" },
+  { action = "autotype", label = "autotype", bind = "alt 1" },
+  { action = "typeusername", label = "type user", bind = "alt 2" },
+  { action = "typepassword", label = "type pass", bind = "alt 3" },
+  { action = "typetotp", label = "type totp", bind = "alt 4" },
+  { action = "copypassword", label = "copy pass", bind = "alt c" },
+  { action = "copyusername", label = "copy user", bind = "alt u" },
+  { action = "copytotp", label = "copy totp", bind = "alt t" },
+  { action = "syncvault", label = "sync", bind = "alt s", after = "AsyncClearReload" },
+]
+
 [[emergencies]]
 text = "Restart Walker"
 command = "omarchy-restart-walker"
