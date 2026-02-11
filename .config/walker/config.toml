@@ -48,7 +48,7 @@ hide_action_hints = false
 
 [providers.actions]
 "menus:rbw" = [
-  { action = "copypassword", label = "copy pass", default = true, bind = "Return" },
+  # { action = "copypassword", label = "copy pass", default = true, bind = "Return" },
   { action = "autotype", label = "autotype", bind = "alt 1" },
   { action = "typeusername", label = "type user", bind = "alt 2" },
   { action = "typepassword", label = "type pass", bind = "alt 3" },
@@ -56,7 +56,12 @@ hide_action_hints = false
   { action = "copypassword", label = "copy pass", bind = "alt c" },
   { action = "copyusername", label = "copy user", bind = "alt u" },
   { action = "copytotp", label = "copy totp", bind = "alt t" },
+  # { action = "open", label = "details", bind = "alt m" },
   { action = "syncvault", label = "sync", bind = "alt s", after = "AsyncClearReload" },
+]
+"menus:rbw_details" = [
+  { action = "copy", label = "copy", default = true, bind = "Return" },
+  { action = "type", label = "type", bind = "alt t" },
 ]
 
 [[emergencies]]

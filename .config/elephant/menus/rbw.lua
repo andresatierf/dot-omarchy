@@ -4,9 +4,7 @@ Icon = "dialog-password"
 Cache = true
 SearchName = true
 
-local function shell_escape(s)
-    return "'" .. s:gsub("'", "'\\''") .. "'"
-end
+dofile(os.getenv("HOME") .. "/.config/elephant/utils/shared.lua")
 
 local function build_rbw_args(name, user, folder)
     local args = shell_escape(name)
@@ -17,14 +15,6 @@ local function build_rbw_args(name, user, folder)
         args = args .. " --folder " .. shell_escape(folder)
     end
     return args
-end
-
-local function copy_cmd(value_cmd)
-    return "wl-copy -- \"$(" .. value_cmd .. ")\" && { sleep 10 && wl-copy --clear; } &"
-end
-
-local function type_cmd(value_cmd)
-    return "sleep 0.3 && wtype -- \"$(" .. value_cmd .. ")\""
 end
 
 function GetEntries()
@@ -58,14 +48,16 @@ function GetEntries()
             table.insert(entries, {
                 Text = display,
                 Subtext = subtext,
+                Value = rbw_args,
+                SubMenu = "rbw_details",
                 Actions = {
-                    copypassword = copy_cmd(get_pass),
-                    copyusername = "wl-copy -- " .. escaped_user .. " && { sleep 10 && wl-copy --clear; } &",
-                    copytotp = copy_cmd(get_totp),
-                    typepassword = type_cmd(get_pass),
-                    typeusername = "sleep 0.3 && wtype -- " .. escaped_user,
-                    typetotp = type_cmd(get_totp),
                     autotype = "sleep 0.3 && wtype -- " .. escaped_user .. " && wtype -k Tab && sleep 0.2 && wtype -- \"$(" .. get_pass .. ")\"",
+                    typeusername = "sleep 0.3 && wtype -- " .. escaped_user,
+                    typepassword = type_cmd(get_pass),
+                    typetotp = type_cmd(get_totp),
+                    copyusername = "wl-copy -- " .. escaped_user .. " && { sleep 10 && wl-copy --clear; } &",
+                    copypassword = copy_cmd(get_pass),
+                    copytotp = copy_cmd(get_totp),
                     syncvault = "rbw sync && notify-send 'rbw' 'Vault synced'",
                 },
             })
