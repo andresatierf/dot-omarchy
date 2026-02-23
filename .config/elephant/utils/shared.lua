@@ -30,3 +30,7 @@ end
 function type_cmd(cmd)
     return "sleep 0.3 && wtype -- \"$(" .. cmd .. ")\""
 end
+
+function autotype_cmd(rbw_args)
+    return "omarchy-rbw-autotype " .. rbw_args
+end

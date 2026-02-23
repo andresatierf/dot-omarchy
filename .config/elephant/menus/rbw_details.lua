@@ -22,6 +22,18 @@ function GetEntries()
     f:close()
     if content == "" then os.remove(tmp) return entries end
 
+    -- Autotype
+    local autotype_seq = jq('[(.fields // [])[]] | map(select(.name == "_autotype")) | .[0].value // empty', tmp)
+    if autotype_seq == "" then autotype_seq = "username:tab:password" end
+    table.insert(entries, {
+        Text = "Autotype",
+        Subtext = autotype_seq,
+        Icon = "input-keyboard",
+        Actions = {
+            type = autotype_cmd(rbw_args),
+        },
+    })
+
     -- Username
     local username = jq(".data.username // empty", tmp)
     if username ~= "" then
@@ -51,7 +63,7 @@ function GetEntries()
     end
 
     -- TOTP
-    local has_totp = jq([=[if .data.totp != null then "1" else empty end]=], tmp)
+    local has_totp = jq([=[if .data.totp then "1" else empty end]=], tmp)
     if has_totp == "1" then
         table.insert(entries, {
             Text = "TOTP",
@@ -96,14 +108,16 @@ function GetEntries()
     end
 
     -- Custom fields
-    local fields_filter = [=[(.fields // [])[] | select(.value // "" != "") | "\(.type)\t\(.name)\t\(.value)"]=]
-    local field_h = io.popen("jq -r " .. shell_escape(fields_filter) .. " " .. shell_escape(tmp) .. " 2>/dev/null")
+    local field_h = io.popen("jq -r '(.fields // [])[] | select(.value | length > 0) | .type, .name, .value' " .. shell_escape(tmp) .. " 2>/dev/null")
     if field_h then
-        for line in field_h:lines() do
-            local ftype, fname, fvalue = line:match("^(%d+)\t(.-)\t(.+)$")
+        while true do
+            local ftype = field_h:read("*l")
+            if not ftype then break end
+            local fname = field_h:read("*l")
+            local fvalue = field_h:read("*l")
             if fname and fvalue then
-                local subtext = ftype == "1" and mask(fvalue) or fvalue
-                local icon = ftype == "1" and "channel-secure-symbolic" or "view-list-text"
+                local subtext = ftype == "hidden" and mask(fvalue) or fvalue
+                local icon = ftype == "hidden" and "channel-secure-symbolic" or "view-list-text"
                 table.insert(entries, {
                     Text = fname,
                     Subtext = subtext,

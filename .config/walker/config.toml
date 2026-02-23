@@ -44,7 +44,6 @@ provider = "clipboard"
 [[providers.prefixes]]
 prefix = "!"
 provider = "menus:rbw"
-hide_action_hints = false
 
 [providers.actions]
 "menus:rbw" = [
@@ -56,25 +55,14 @@ hide_action_hints = false
   { action = "copypassword", label = "copy pass", bind = "alt c" },
   { action = "copyusername", label = "copy user", bind = "alt u" },
   { action = "copytotp", label = "copy totp", bind = "alt t" },
-  # { action = "open", label = "details", bind = "alt m" },
+  { action = "menus:open", label = "details", bind = "alt m" },
   { action = "syncvault", label = "sync", bind = "alt s", after = "AsyncClearReload" },
 ]
 "menus:rbw_details" = [
-  { action = "copy", label = "copy", default = true, bind = "Return" },
+  { action = "copy", label = "copy", bind = "Return" },
   { action = "type", label = "type", bind = "alt t" },
 ]
 
 [[emergencies]]
 text = "Restart Walker"
 command = "omarchy-restart-walker"
-
-bitwarden = [
-  { action = "typeusername", label = "type username", bind = "ctrl u" },
-  { action = "typepassword", label = "type password", default = true, bind = "ctrl p" },
-  { action = "typeotp", label = "type 2fa", bind = "ctrl t" },
-  { action = "copyusername", label = "copy username", bind = "shift Return" },
-  { action = "copypassword", label = "copy password", default = true, bind = "Return" },
-  { action = "copyotp", label = "copy 2fa", bind = "ctrl Return" },
-  # { action = "menu", label = "menu", bind = "ctrl m" },
-  { action = "syncvault", label = "sync", bind = "ctrl s" },
-]

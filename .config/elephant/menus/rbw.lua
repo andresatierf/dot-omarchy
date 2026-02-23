@@ -51,14 +51,14 @@ function GetEntries()
                 Value = rbw_args,
                 SubMenu = "rbw_details",
                 Actions = {
-                    autotype = "sleep 0.3 && wtype -- " .. escaped_user .. " && wtype -k Tab && sleep 0.2 && wtype -- \"$(" .. get_pass .. ")\"",
+                    autotype = autotype_cmd(rbw_args),
                     typeusername = "sleep 0.3 && wtype -- " .. escaped_user,
                     typepassword = type_cmd(get_pass),
                     typetotp = type_cmd(get_totp),
                     copyusername = "wl-copy -- " .. escaped_user .. " && { sleep 10 && wl-copy --clear; } &",
                     copypassword = copy_cmd(get_pass),
                     copytotp = copy_cmd(get_totp),
-                    syncvault = "rbw sync && notify-send 'rbw' 'Vault synced'",
+                    syncvault = "rbw sync && notify-send 'Walker - rbw' 'Vault synced'",
                 },
             })
         end
