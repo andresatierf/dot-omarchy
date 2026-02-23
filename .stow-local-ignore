@@ -22,4 +22,5 @@ _darcs
 
 .*\.service$
 
+.editorconfig
 mise.toml
