@@ -35,7 +35,8 @@ zstyle ':zim:path' paths \
     "/usr/local/go/bin" \
     "$HOME/go/bin" \
     "$HOME/.local/share/bob/nvim-bin" \
-    "/root/.local/bin"
+    "/root/.local/bin" \
+    "$HOME/.dotnet/tools"
 
 # prompt
 zstyle ':user:prompt:theme' theme 'zen' # options: p10k, zen
