@@ -1,0 +1,26 @@
+#!/bin/bash
+# Execute autotype sequence for an rbw entry
+# Checks for _autotype custom field; defaults to username:tab:password
+# Tokens: username, password, totp, notes, tab, enter, delay, or any custom field name
+
+sleep 0.3
+
+json=$(rbw get --raw --full "$@" 2>/dev/null) || exit 1
+[ -z "$json" ] && exit 1
+
+seq=$(printf '%s' "$json" | jq -r '[(.fields // [])[]] | map(select(.name == "_autotype")) | .[0].value // empty')
+: "${seq:=username:tab:password}"
+
+IFS=: read -ra tokens <<< "$seq"
+for t in "${tokens[@]}"; do
+  case "$t" in
+    username) v=$(printf '%s' "$json" | jq -r '.data.username // empty'); [ -n "$v" ] && wtype -- "$v";;
+    password) v=$(printf '%s' "$json" | jq -r '.data.password // empty'); [ -n "$v" ] && wtype -- "$v";;
+    totp) v=$(rbw code "$@" 2>/dev/null); [ -n "$v" ] && wtype -- "$v";;
+    notes) v=$(printf '%s' "$json" | jq -r '.notes // empty'); [ -n "$v" ] && wtype -- "$v";;
+    tab) wtype -k Tab; sleep 0.2;;
+    enter) wtype -k Return;;
+    delay) sleep 1;;
+    *) v=$(printf '%s' "$json" | jq -r --arg n "$t" '[(.fields // [])[]] | map(select(.name == $n)) | .[0].value // empty'); [ -n "$v" ] && wtype -- "$v";;
+  esac
+done
