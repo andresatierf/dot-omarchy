@@ -34,6 +34,7 @@ zmodule $andresatierf/plugins/vivid
 zmodule $andresatierf/aliases/safety
 zmodule $andresatierf/aliases/better-defaults
 zmodule $andresatierf/aliases
+zmodule $andresatierf/tmux
 
 zmodule $andresatierf/plugins/gh
 zmodule $andresatierf/plugins/bat
