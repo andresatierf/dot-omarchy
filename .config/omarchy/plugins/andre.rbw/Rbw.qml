@@ -41,7 +41,23 @@ Item {
   property int contentSpacing: Style.spacing.md
   property int rowHeight: Math.max(Style.space(58), Style.font.body + Style.font.caption + Style.spacing.rowPaddingX * 2)
   property int cardWidth: Math.min(Style.space(720), panel.width - Style.gapsOut * 2)
-  property int cardHeight: Math.min(Style.space(620), panel.height - Style.gapsOut * 2)
+
+  readonly property int rowSpacing: Style.space(2)
+  readonly property int rowPitch: rowHeight + rowSpacing
+  // What the card spends on chrome: borders, padding, header, footer, and the
+  // two gaps around the list.
+  readonly property int chromeHeight: card.contentTopInset + card.contentBottomInset
+    + headerHeight + footerHeight + contentSpacing * 2
+  readonly property int maxCardHeight: Math.min(Style.space(700), panel.height - Style.gapsOut * 2)
+  readonly property int maxListHeight: Math.max(rowPitch, maxCardHeight - chromeHeight)
+  // Whole rows, and no more of them than there are results: the card shrinks to
+  // its content rather than leaving dead space under the hints, and never slices
+  // a row in half against the footer.
+  readonly property int fittedListHeight: Math.floor((maxListHeight + rowSpacing) / rowPitch) * rowPitch - rowSpacing
+  readonly property int listHeight: displayModel.count === 0
+    ? Math.min(maxListHeight, rowPitch * 3)
+    : Math.max(rowHeight, Math.min(displayModel.count * rowPitch - rowSpacing, fittedListHeight))
+  property int cardHeight: chromeHeight + listHeight
 
   readonly property string hints: "Enter autotype   Alt+2 user   Alt+3 pass   Alt+4 totp   Alt+c/u/t copy   Alt+m fields   Alt+s sync"
 
@@ -331,15 +347,14 @@ Item {
 
         Item {
           width: parent.width
-          readonly property int available: parent.height - root.headerHeight - root.footerHeight - root.contentSpacing * 2
-          height: Math.max(root.rowHeight, Math.floor(available / (root.rowHeight + Style.space(2))) * (root.rowHeight + Style.space(2)))
+          height: root.listHeight
 
           ListView {
             id: resultList
             anchors.fill: parent
             model: displayModel
             clip: true
-            spacing: Style.space(2)
+            spacing: root.rowSpacing
             boundsBehavior: Flickable.StopAtBounds
             cacheBuffer: root.rowHeight * 8
 
