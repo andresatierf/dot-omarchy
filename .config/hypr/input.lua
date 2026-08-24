@@ -23,8 +23,7 @@ hl.config({
 })
 
 -- App-specific touchpad scroll speeds.
-o.window("(Alacritty|kitty)", { scroll_touchpad = 1.5 })
-o.window("com.mitchellh.ghostty", { scroll_touchpad = 0.2 })
+o.window("kitty", { scroll_touchpad = 1.5 })
 
 -- Three-finger horizontal swipe changes workspaces.
 hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })

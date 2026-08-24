@@ -5,10 +5,6 @@
 -- over verbatim from the old exec-once lines: the app opens on that workspace
 -- without pulling focus to it.
 
--- NOTE: ghostty is not installed on this system, so this line is a no-op until
--- it is (the terminal in use is foot).
-o.exec_on_start("[workspace 1 silent] uwsm-app -- ghostty")
-
 o.exec_on_start("[workspace 4 silent] uwsm-app -- spotify")
 o.exec_on_start("[workspace 4 silent] uwsm-app -- obsidian")
 
