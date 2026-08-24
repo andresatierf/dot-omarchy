@@ -30,7 +30,8 @@
 
 -- Passwords: replace Omarchy's default 1Password binding with the rbw picker.
 hl.unbind("SUPER + SHIFT + SLASH")
-o.bind("SUPER + SHIFT + SLASH", "Passwords", "omarchy-rbw")
+-- Swap the command back to "omarchy-rbw" to use the menu-driven picker.
+o.bind("SUPER + SHIFT + SLASH", "Passwords", "omarchy-shell shell toggle andre.rbw")
 
 -- ---------------------------------------------------------------------------
 -- Migrated from bindings.conf and bindings/tiling.conf when Omarchy 4 moved to

@@ -92,13 +92,14 @@ def host:
     end;
 
 def glyph:
+  # Keyed on the top-level folder. An unmapped folder just falls back to the
+  # key glyph, so reorganising the vault degrades quietly.
   {
-    "archive": "", "dev": "", "email": "", "finance": "",
-    "food": "", "gaming": "", "health": "", "media": "",
-    "others": "", "private": "", "school": "", "security": "",
-    "server": "", "shopping": "", "social-media": "", "ssh": "",
-    "transportation": "", "work": ""
-  }[.] // "";
+    "archive": "\uf187", "dev": "\uf121", "entertainment": "\uf008",
+    "family": "\uf0c0", "identity": "\uf2c2", "infra": "\uf233",
+    "life": "\uf015", "misc": "\uf0c5", "money": "\uf155",
+    "private": "\uf21b", "security": "\uf023", "work": "\uf0b1"
+  }[.] // "\uf084";
 
 sort_by(.name | ascii_downcase)[]
 | (.name // "") as $name
@@ -112,8 +113,7 @@ sort_by(.name | ascii_downcase)[]
    elif $host != "" and ($host | ascii_downcase) != ($name | ascii_downcase) then $host
    else (.type // "") end) as $sub
 | ($folder | if . == "" then "" else ((split("/") | .[0]) // "") end | glyph) as $glyph
-| [$name, $user, $folder, $sub, $glyph]
-| join("\u001f")
+| {name: $name, user: $user, folder: $folder, sub: $sub, glyph: $glyph}
 JQ
 )
 
@@ -133,7 +133,8 @@ pick_entry() {
     else
       options+=("$glyph"$'\t'"$name")
     fi
-  done < <(rbw list --raw 2>/dev/null | jq -r "$ROW_QUERY" 2>/dev/null)
+  done < <(rbw list --raw 2>/dev/null |
+    jq -r "$ROW_QUERY | [.name, .user, .folder, .sub, .glyph] | join(\"\u001f\")" 2>/dev/null)
 
   ((${#options[@]} == 0)) && die "Vault is empty — try a sync"
 
@@ -282,22 +283,49 @@ entry_actions() {
   action=$(menu "$LABEL" "${options[@]}")
 
   case "$action" in
-    Autotype) exec omarchy-rbw-autotype "${RBW_ARGS[@]}" ;;
-    "Copy password")
+    Autotype) run_action autotype ;;
+    "Copy password") run_action copy-password ;;
+    "Type password") run_action type-password ;;
+    "Copy username") run_action copy-username ;;
+    "Type username") run_action type-username ;;
+    "Copy TOTP") run_action copy-totp ;;
+    "Type TOTP") run_action type-totp ;;
+    Fields) run_action fields ;;
+    "Sync vault") run_action sync ;;
+  esac
+}
+
+# Every action the picker and the shell plugin can invoke. Expects RBW_ARGS,
+# LABEL and ENTRY to be set for the chosen entry.
+run_action() {
+  local value
+  case "$1" in
+    autotype) exec omarchy-rbw-autotype "${RBW_ARGS[@]}" ;;
+    copy-password)
       value=$(jqe '.data.password // empty')
+      [[ -z $value ]] && die "No password on $LABEL"
       copy_secret "$value"; notify "Copied password" "$LABEL — clears in ${CLEAR_AFTER}s" ;;
-    "Type password") type_secret "$(jqe '.data.password // empty')" ;;
-    "Copy username")
-      copy_secret "$(jqe '.data.username // empty')"; notify "Copied username" "$LABEL" ;;
-    "Type username") type_secret "$(jqe '.data.username // empty')" ;;
-    "Copy TOTP")
-      value=$(totp_code) || die "No TOTP for $LABEL"
-      copy_secret "$value"; notify "Copied TOTP" "$LABEL — clears in ${CLEAR_AFTER}s" ;;
-    "Type TOTP")
-      value=$(totp_code) || die "No TOTP for $LABEL"
+    type-password)
+      value=$(jqe '.data.password // empty')
+      [[ -z $value ]] && die "No password on $LABEL"
       type_secret "$value" ;;
-    Fields) browse_fields ;;
-    "Sync vault") sync_vault ;;
+    copy-username)
+      value=$(jqe '.data.username // empty')
+      [[ -z $value ]] && die "No username on $LABEL"
+      copy_secret "$value"; notify "Copied username" "$LABEL" ;;
+    type-username)
+      value=$(jqe '.data.username // empty')
+      [[ -z $value ]] && die "No username on $LABEL"
+      type_secret "$value" ;;
+    copy-totp)
+      value=$(totp_code) || die "No TOTP on $LABEL"
+      copy_secret "$value"; notify "Copied TOTP" "$LABEL — clears in ${CLEAR_AFTER}s" ;;
+    type-totp)
+      value=$(totp_code) || die "No TOTP on $LABEL"
+      type_secret "$value" ;;
+    fields) browse_fields ;;
+    sync) sync_vault ;;
+    *) die "Unknown action: $1" ;;
   esac
 }
 
@@ -310,7 +338,32 @@ sync_vault() {
   fi
 }
 
+# The shell plugin uses `list` to draw its rows and `act` to do the work, so
+# every secret stays in this short-lived process and never enters the shell.
 case "${1-}" in
+  list)
+    ensure_unlocked
+    rbw list --raw 2>/dev/null | jq -c "$ROW_QUERY" | jq -s -c '.'
+    exit 0 ;;
+  act)
+    action=${2-}
+    NAME=${3-}
+    USERNAME=${4-}
+    FOLDER=${5-}
+    [[ -n $action && -n $NAME ]] ||
+      { echo "usage: omarchy-rbw act <action> <name> <user> <folder>" >&2; exit 2; }
+    RBW_ARGS=("$NAME")
+    [[ -n $USERNAME ]] && RBW_ARGS+=("$USERNAME")
+    [[ -n $FOLDER ]] && RBW_ARGS+=(--folder "$FOLDER")
+    LABEL=$NAME
+    [[ -n $FOLDER ]] && LABEL="$FOLDER/$NAME"
+    if [[ $action != sync ]]; then
+      ensure_unlocked
+      ENTRY=$(rbw get --raw --full "${RBW_ARGS[@]}" 2>/dev/null) || die "Could not read $LABEL"
+      [[ -z $ENTRY ]] && die "Could not read $LABEL"
+    fi
+    run_action "$action"
+    exit 0 ;;
   sync) sync_vault; exit 0 ;;
   lock) rbw lock >/dev/null 2>&1; notify "Vault locked"; exit 0 ;;
   unlock) ensure_unlocked; notify "Vault unlocked"; exit 0 ;;

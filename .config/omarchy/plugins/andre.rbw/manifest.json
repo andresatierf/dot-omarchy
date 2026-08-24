@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "andre.rbw",
+  "name": "Passwords",
+  "version": "1.0.0",
+  "author": "Andre Freitas",
+  "description": "Bitwarden (rbw) vault picker with single-key actions",
+  "kinds": [
+    "overlay"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "overlay": "Rbw.qml"
+  }
+}
