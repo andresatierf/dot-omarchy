@@ -1,0 +1,335 @@
+#!/bin/bash
+
+# Bitwarden vault (rbw) driven from the Omarchy menu.
+#
+#   omarchy-rbw           pick an entry, then an action
+#   omarchy-rbw sync      sync the vault
+#   omarchy-rbw unlock    unlock the vault
+#   omarchy-rbw lock      lock the vault
+#
+# Secrets never reach argv: values are piped into wl-copy and wtype. Copies are
+# marked --sensitive, which makes the Omarchy clipboard plugin skip them
+# (shell/plugins/clipboard/capture.sh), and are cleared again after a delay.
+
+set -uo pipefail
+
+CLEAR_AFTER=${OMARCHY_RBW_CLEAR_AFTER:-15}
+TYPE_DELAY=${OMARCHY_RBW_TYPE_DELAY:-5}
+FOCUS_DELAY=${OMARCHY_RBW_FOCUS_DELAY:-0.3}
+MENU_WIDTH=${OMARCHY_RBW_MENU_WIDTH:-700}
+
+I_KEY=$''
+I_TYPE=$''
+I_COPY=$''
+I_TOTP=$''
+I_USER=$''
+I_FIELDS=$''
+I_SYNC=$''
+I_NOTE=$''
+I_URI=$''
+I_HIDDEN=$''
+
+notify() { notify-send -a Passwords -- "$1" "${2-}" >/dev/null 2>&1; }
+
+die() {
+  notify "Passwords" "$1"
+  exit 1
+}
+
+# Selecting nothing is a cancel, not a failure — leave quietly.
+menu() {
+  local prompt="$1"
+  shift
+  local selection
+  selection=$(printf '%s\n' "$@" | omarchy-menu-select "$prompt" -- --width "$MENU_WIDTH") || return 1
+  [[ -z $selection ]] && return 1
+  printf '%s' "${selection%%$'\t'*}"
+}
+
+# wl-copy forks and serves the selection, so the clearing subshell has to
+# outlive this script. It only clears a clipboard still holding our secret.
+copy_secret() {
+  local value="$1"
+  printf '%s' "$value" | wl-copy --sensitive --trim-newline
+  (
+    sleep "$CLEAR_AFTER"
+    [[ $(wl-paste --no-newline 2>/dev/null) == "$value" ]] && wl-copy --clear
+  ) >/dev/null 2>&1 &
+  disown
+}
+
+type_secret() {
+  sleep "$FOCUS_DELAY"
+  printf '%s' "$1" | wtype -d "$TYPE_DELAY" -
+}
+
+mask() {
+  local n=${#1}
+  ((n > 12)) && n=12
+  ((n == 0)) && return
+  printf '%*s' "$n" '' | tr ' ' '*'
+}
+
+oneline() { printf '%s' "${1//$'\n'/ | }"; }
+
+ensure_unlocked() {
+  rbw unlocked >/dev/null 2>&1 && return
+  rbw unlock >/dev/null 2>&1 || die "Vault stayed locked"
+}
+
+# Row composition lives in jq: it sorts by name, picks a glyph from the entry's
+# top-level folder, and builds the subtext as "username · folder". Fields come
+# back unit-separated — a tab would make `read` collapse empty leading fields.
+ROW_QUERY=$(cat <<'JQ'
+# Registrable domain of the first URI: auth.services.adobe.com -> adobe.com
+def host:
+  ((.uris // []) | map(select(type == "string")) | (.[0] // ""))
+  | if . == "" then "" else
+      (sub("^[a-z]+://"; "") | sub("^www\\."; ""))
+      | ((split("/") | .[0]) // "")
+      | ((split(":") | .[0]) // "")
+      | (split(".") | if length > 1 then (.[-2] + "." + .[-1]) else (.[0] // "") end)
+    end;
+
+def glyph:
+  {
+    "archive": "", "dev": "", "email": "", "finance": "",
+    "food": "", "gaming": "", "health": "", "media": "",
+    "others": "", "private": "", "school": "", "security": "",
+    "server": "", "shopping": "", "social-media": "", "ssh": "",
+    "transportation": "", "work": ""
+  }[.] // "";
+
+sort_by(.name | ascii_downcase)[]
+| (.name // "") as $name
+| (.user // "") as $user
+| (.folder // "") as $folder
+| host as $host
+# Username first, folder second. Entries with neither fall back to the domain,
+# then the item type, so every row keeps a subtext and the list stays even.
+| ([$user, $folder] | map(select(. != "")) | join(" · ")) as $sub
+| (if $sub != "" then $sub
+   elif $host != "" and ($host | ascii_downcase) != ($name | ascii_downcase) then $host
+   else (.type // "") end) as $sub
+| ($folder | if . == "" then "" else ((split("/") | .[0]) // "") end | glyph) as $glyph
+| [$name, $user, $folder, $sub, $glyph]
+| join("\u001f")
+JQ
+)
+
+pick_entry() {
+  local -A seen=()
+  local -a options=()
+  local name user folder sub glyph key record selection
+
+  while IFS=$'\x1f' read -r name user folder sub glyph; do
+    [[ -z $name ]] && continue
+    key=$name
+    [[ -n $sub ]] && key+=$'\t'$sub
+    [[ -n ${seen[$key]+x} ]] && continue
+    seen[$key]="$folder"$'\x1f'"$name"$'\x1f'"$user"
+    if [[ -n $sub ]]; then
+      options+=("$glyph"$'\t'"$name"$'\t'"$sub")
+    else
+      options+=("$glyph"$'\t'"$name")
+    fi
+  done < <(rbw list --raw 2>/dev/null | jq -r "$ROW_QUERY" 2>/dev/null)
+
+  ((${#options[@]} == 0)) && die "Vault is empty — try a sync"
+
+  selection=$(printf '%s\n' "${options[@]}" | omarchy-menu-select "Passwords" -- --width "$MENU_WIDTH") || exit 0
+  selection=${selection%%$'\n'*}
+  [[ -z $selection ]] && exit 0
+
+  record=${seen[$selection]:-}
+  [[ -z $record ]] && die "Could not resolve that entry"
+  FOLDER=${record%%$'\x1f'*}
+  record=${record#*$'\x1f'}
+  NAME=${record%%$'\x1f'*}
+  USERNAME=${record#*$'\x1f'}
+
+  RBW_ARGS=("$NAME")
+  [[ -n $USERNAME ]] && RBW_ARGS+=("$USERNAME")
+  [[ -n $FOLDER ]] && RBW_ARGS+=(--folder "$FOLDER")
+}
+
+jqe() { printf '%s' "$ENTRY" | jq -r "$1" 2>/dev/null; }
+
+field_value() {
+  printf '%s' "$ENTRY" | jq -r --arg n "$1" \
+    '[(.fields // [])[]] | map(select(.name == $n)) | .[0].value // empty' 2>/dev/null
+}
+
+totp_code() {
+  local code
+  code=$(rbw code "${RBW_ARGS[@]}" 2>/dev/null) || return 1
+  [[ -z $code ]] && return 1
+  printf '%s' "$code"
+}
+
+# Mirrors the old rbw_details menu: every stored value, with the hidden ones
+# masked, each offering copy or type.
+browse_fields() {
+  local -a labels=() kinds=() values=() options=()
+  local seq username password notes uri fname fvalue ftype i
+
+  seq=$(field_value _autotype)
+  : "${seq:=username:tab:password}"
+  labels+=("Autotype"); kinds+=(autotype); values+=("")
+  options+=("$I_TYPE"$'\t'"Autotype"$'\t'"$seq")
+
+  username=$(jqe '.data.username // empty')
+  if [[ -n $username ]]; then
+    labels+=("Username"); kinds+=(literal); values+=("$username")
+    options+=("$I_USER"$'\t'"Username"$'\t'"$username")
+  fi
+
+  password=$(jqe '.data.password // empty')
+  if [[ -n $password ]]; then
+    labels+=("Password"); kinds+=(literal); values+=("$password")
+    options+=("$I_KEY"$'\t'"Password"$'\t'"$(mask "$password")")
+  fi
+
+  if [[ $(jqe 'if .data.totp then "1" else "" end') == 1 ]]; then
+    labels+=("TOTP"); kinds+=(totp); values+=("")
+    options+=("$I_TOTP"$'\t'"TOTP"$'\t'"generated on demand")
+  fi
+
+  notes=$(jqe '.notes // empty')
+  if [[ -n $notes ]]; then
+    labels+=("Notes"); kinds+=(literal); values+=("$notes")
+    options+=("$I_NOTE"$'\t'"Notes"$'\t'"$(oneline "$notes")")
+  fi
+
+  i=1
+  while IFS= read -r uri; do
+    [[ -z $uri ]] && continue
+    labels+=("URI $i"); kinds+=(literal); values+=("$uri")
+    options+=("$I_URI"$'\t'"URI $i"$'\t'"$uri")
+    ((i++))
+  done < <(printf '%s' "$ENTRY" | jq -r '(.data.uris // [])[] | .uri // empty' 2>/dev/null)
+
+  while IFS= read -r ftype && IFS= read -r fname && IFS= read -r fvalue; do
+    [[ -z $fname ]] && continue
+    labels+=("$fname"); kinds+=(literal); values+=("$fvalue")
+    if [[ $ftype == hidden ]]; then
+      options+=("$I_HIDDEN"$'\t'"$fname"$'\t'"$(mask "$fvalue")")
+    else
+      options+=("$I_FIELDS"$'\t'"$fname"$'\t'"$(oneline "$fvalue")")
+    fi
+  done < <(printf '%s' "$ENTRY" |
+    jq -r '(.fields // [])[] | select((.value // "") | length > 0) | (.type // ""), (.name // ""), (.value | gsub("\n"; " | "))' 2>/dev/null)
+
+  local picked
+  picked=$(menu "$LABEL" "${options[@]}")
+
+  local idx=-1
+  for i in "${!labels[@]}"; do
+    [[ ${labels[$i]} == "$picked" ]] && { idx=$i; break; }
+  done
+  ((idx < 0)) && exit 0
+
+  if [[ ${kinds[$idx]} == autotype ]]; then
+    exec omarchy-rbw-autotype "${RBW_ARGS[@]}"
+  fi
+
+  local how
+  how=$(menu "${labels[$idx]}" \
+    "$I_COPY"$'\t'"Copy" \
+    "$I_TYPE"$'\t'"Type")
+
+  local value=${values[$idx]}
+  if [[ ${kinds[$idx]} == totp ]]; then
+    value=$(totp_code) || die "No TOTP for $LABEL"
+  fi
+
+  case "$how" in
+    Copy) copy_secret "$value"; notify "Copied ${labels[$idx]}" "$LABEL — clears in ${CLEAR_AFTER}s" ;;
+    Type) type_secret "$value" ;;
+  esac
+}
+
+entry_actions() {
+  local -a options=()
+  local seq username
+
+  seq=$(field_value _autotype)
+  : "${seq:=username:tab:password}"
+  options+=("$I_TYPE"$'\t'"Autotype"$'\t'"$seq")
+
+  [[ -n $(jqe '.data.password // empty') ]] && options+=(
+    "$I_COPY"$'\t'"Copy password"
+    "$I_TYPE"$'\t'"Type password"
+  )
+
+  username=$(jqe '.data.username // empty')
+  [[ -n $username ]] && options+=(
+    "$I_COPY"$'\t'"Copy username"$'\t'"$username"
+    "$I_TYPE"$'\t'"Type username"$'\t'"$username"
+  )
+
+  [[ $(jqe 'if .data.totp then "1" else "" end') == 1 ]] && options+=(
+    "$I_COPY"$'\t'"Copy TOTP"
+    "$I_TYPE"$'\t'"Type TOTP"
+  )
+
+  options+=(
+    "$I_FIELDS"$'\t'"Fields"$'\t'"browse everything stored on this entry"
+    "$I_SYNC"$'\t'"Sync vault"
+  )
+
+  local action value
+  action=$(menu "$LABEL" "${options[@]}")
+
+  case "$action" in
+    Autotype) exec omarchy-rbw-autotype "${RBW_ARGS[@]}" ;;
+    "Copy password")
+      value=$(jqe '.data.password // empty')
+      copy_secret "$value"; notify "Copied password" "$LABEL — clears in ${CLEAR_AFTER}s" ;;
+    "Type password") type_secret "$(jqe '.data.password // empty')" ;;
+    "Copy username")
+      copy_secret "$(jqe '.data.username // empty')"; notify "Copied username" "$LABEL" ;;
+    "Type username") type_secret "$(jqe '.data.username // empty')" ;;
+    "Copy TOTP")
+      value=$(totp_code) || die "No TOTP for $LABEL"
+      copy_secret "$value"; notify "Copied TOTP" "$LABEL — clears in ${CLEAR_AFTER}s" ;;
+    "Type TOTP")
+      value=$(totp_code) || die "No TOTP for $LABEL"
+      type_secret "$value" ;;
+    Fields) browse_fields ;;
+    "Sync vault") sync_vault ;;
+  esac
+}
+
+sync_vault() {
+  ensure_unlocked
+  if rbw sync >/dev/null 2>&1; then
+    notify "Vault synced"
+  else
+    die "Sync failed"
+  fi
+}
+
+case "${1-}" in
+  sync) sync_vault; exit 0 ;;
+  lock) rbw lock >/dev/null 2>&1; notify "Vault locked"; exit 0 ;;
+  unlock) ensure_unlocked; notify "Vault unlocked"; exit 0 ;;
+  ""|pick) ;;
+  -h|--help|help)
+    sed -n '3,10p' "$0" | sed 's/^# \{0,1\}//'
+    exit 0 ;;
+  *) echo "omarchy-rbw: unknown command '$1'" >&2; exit 2 ;;
+esac
+
+command -v rbw >/dev/null || die "rbw is not installed"
+
+ensure_unlocked
+pick_entry
+
+LABEL=$NAME
+[[ -n $FOLDER ]] && LABEL="$FOLDER/$NAME"
+
+ENTRY=$(rbw get --raw --full "${RBW_ARGS[@]}" 2>/dev/null) || die "Could not read $LABEL"
+[[ -z $ENTRY ]] && die "Could not read $LABEL"
+
+entry_actions

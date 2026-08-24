@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Execute the autotype sequence for an rbw entry.
+#
+#   omarchy-rbw-autotype <name> [username] [--folder <folder>]
+#
+# The sequence comes from the entry's "_autotype" custom field and defaults to
+# username:tab:password. Tokens: username, password, totp, notes, tab, enter,
+# delay, or the name of any custom field.
+#
+# Values are piped into wtype rather than passed as arguments, so no secret is
+# ever visible in the process list.
+
+set -uo pipefail
+
+TYPE_DELAY=${OMARCHY_RBW_TYPE_DELAY:-5}
+FOCUS_DELAY=${OMARCHY_RBW_FOCUS_DELAY:-0.3}
+
+# The menu is still fading out when this starts; typing early goes nowhere.
+sleep "$FOCUS_DELAY"
+
+json=$(rbw get --raw --full "$@" 2>/dev/null) || exit 1
+[[ -z $json ]] && exit 1
+
+emit() { [[ -n $1 ]] && printf '%s' "$1" | wtype -d "$TYPE_DELAY" -; }
+
+jqe() { printf '%s' "$json" | jq -r "$1" 2>/dev/null; }
+
+seq=$(printf '%s' "$json" | jq -r '[(.fields // [])[]] | map(select(.name == "_autotype")) | .[0].value // empty' 2>/dev/null)
+: "${seq:=username:tab:password}"
+
+IFS=: read -ra tokens <<<"$seq"
+for token in "${tokens[@]}"; do
+  case "$token" in
+    username) emit "$(jqe '.data.username // empty')" ;;
+    password) emit "$(jqe '.data.password // empty')" ;;
+    totp) emit "$(rbw code "$@" 2>/dev/null)" ;;
+    notes) emit "$(jqe '.notes // empty')" ;;
+    tab) wtype -k Tab; sleep 0.2 ;;
+    enter) wtype -k Return ;;
+    delay) sleep 1 ;;
+    *) emit "$(printf '%s' "$json" | jq -r --arg n "$token" '[(.fields // [])[]] | map(select(.name == $n)) | .[0].value // empty' 2>/dev/null)" ;;
+  esac
+done
