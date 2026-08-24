@@ -5,5 +5,8 @@
 [rebase]
   updateRefs = true
 
+[coderabbit]
+  machineId = cli/7670d73af08f489b82f0d6c435ed0fab
+
 [include]
   path = ~/.config/delta/.gitconfig

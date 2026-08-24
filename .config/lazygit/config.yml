@@ -3,9 +3,9 @@ gui:
   showIcons: true
 notARepository: "skip" # 'prompt' | 'create' | 'skip'
 git:
-  pagers:
+  diffRenderers:
     - colorArg: always
-      pager: delta --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
+      command: delta --hyperlinks --hyperlinks-file-link-format="lazygit-edit://{path}:{line}"
   skipHookPrefix: ""
 # customCommands:
 #   # sync origin/master with upstream/master
