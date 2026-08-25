@@ -10,6 +10,10 @@ import qs.Ui
 // The list and every action come from `omarchy-rbw`, which runs as its own
 // short-lived process: this overlay only ever holds entry names, usernames and
 // folders. No password, TOTP or note ever enters the shell process.
+//
+// `omarchy-rbw list` also reports which entries suit the focused window, so the
+// credential you came for is usually the one already selected. Picking an entry
+// teaches that pairing; see the `learn` verb in omarchy-rbw.
 Item {
   id: root
 
@@ -22,7 +26,14 @@ Item {
   property int selectedIndex: 0
   property bool cursorActive: false
   property var rows: []
+  property var suggested: []
+  property string contextKey: ""
+  property string contextLabel: ""
   property bool loading: false
+
+  // Suggestions are an opening offer, not a filter: the moment you type, the
+  // list is yours again and the banner gets out of the way.
+  readonly property bool showSuggestions: root.suggested.length > 0 && root.filterText.length === 0
 
   // Shares the [menu] surface tokens, so any theme that styles the Omarchy
   // menu styles this the same way.
@@ -39,6 +50,7 @@ Item {
   property int headerHeight: Math.max(Style.space(34), Style.font.title + Style.spacing.controlPaddingY * 2)
   property int footerHeight: Math.max(Style.space(22), Style.font.caption + Style.spacing.controlPaddingY)
   property int contentSpacing: Style.spacing.md
+  property int bannerHeight: Math.max(Style.space(20), Style.font.bodySmall + Style.spacing.controlPaddingY)
   property int rowHeight: Math.max(Style.space(58), Style.font.body + Style.font.caption + Style.spacing.rowPaddingX * 2)
   property int cardWidth: Math.min(Style.space(720), panel.width - Style.gapsOut * 2)
 
@@ -48,6 +60,7 @@ Item {
   // two gaps around the list.
   readonly property int chromeHeight: card.contentTopInset + card.contentBottomInset
     + headerHeight + footerHeight + contentSpacing * 2
+    + (root.showSuggestions ? bannerHeight + contentSpacing : 0)
   readonly property int maxCardHeight: Math.min(Style.space(700), panel.height - Style.gapsOut * 2)
   readonly property int maxListHeight: Math.max(rowPitch, maxCardHeight - chromeHeight)
   // Whole rows, and no more of them than there are results: the card shrinks to
@@ -59,7 +72,10 @@ Item {
     : Math.max(rowHeight, Math.min(displayModel.count * rowPitch - rowSpacing, fittedListHeight))
   property int cardHeight: chromeHeight + listHeight
 
-  readonly property string hints: "Enter autotype   Alt+2 user   Alt+3 pass   Alt+4 totp   Alt+c/u/t copy   Alt+m fields   Alt+s sync"
+  readonly property string hints: "Enter autotype   Alt+2 user   Alt+3 pass   Alt+4 totp   Alt+c/u/t copy   Alt+m fields   Alt+p pin   Alt+s sync"
+
+  readonly property string suggestGlyph: "\uf0eb"
+  readonly property string learnedGlyph: "\uf005"
 
   function open(payloadJson) {
     root.opened = true
@@ -95,15 +111,23 @@ Item {
   }
 
   function loadRows(raw) {
-    var parsed = []
+    var parsed = null
     try {
-      parsed = JSON.parse(raw || "[]")
+      parsed = JSON.parse(raw || "null")
     } catch (e) {
-      parsed = []
+      parsed = null
     }
-    root.rows = Array.isArray(parsed) ? parsed : []
+    var ctx = (parsed && parsed.context) || {}
+    root.rows = (parsed && Array.isArray(parsed.rows)) ? parsed.rows : []
+    root.suggested = (parsed && Array.isArray(parsed.suggested)) ? parsed.suggested : []
+    root.contextKey = String(ctx.key || "")
+    root.contextLabel = String(ctx.label || "")
     root.loading = false
     root.rebuildDisplay()
+  }
+
+  function rowKey(row) {
+    return String(row.name || "") + "\u001f" + String(row.sub || "")
   }
 
   // A name match beats a match that only landed in the subtext, so typing
@@ -113,10 +137,23 @@ Item {
     var query = root.filterText.trim().toLowerCase()
     var primary = []
     var secondary = []
+    var pinned = {}
+
+    // Matches for the focused window go to the top and leave their place in the
+    // alphabet, so the same entry is never on screen twice.
+    if (root.showSuggestions) {
+      for (var s = 0; s < root.suggested.length; s++) {
+        var hit = root.suggested[s]
+        if (!hit || !hit.name) continue
+        pinned[root.rowKey(hit)] = true
+        primary.push(hit)
+      }
+    }
 
     for (var i = 0; i < root.rows.length; i++) {
       var row = root.rows[i]
       if (!row || !row.name) continue
+      if (pinned[root.rowKey(row)]) continue
       if (!query) {
         primary.push(row)
         continue
@@ -133,7 +170,9 @@ Item {
         user: String(out[j].user || ""),
         folder: String(out[j].folder || ""),
         sub: String(out[j].sub || ""),
-        glyph: String(out[j].glyph || "")
+        glyph: String(out[j].glyph || ""),
+        suggested: pinned[root.rowKey(out[j])] === true,
+        learned: out[j].learned === true
       })
     }
 
@@ -190,7 +229,22 @@ Item {
     var row = displayModel.get(root.selectedIndex)
     if (!row) return
     root.dismiss()
-    Quickshell.execDetached(["omarchy-rbw", "act", action, row.name, row.user, row.folder])
+    Quickshell.execDetached(["omarchy-rbw", "act", action, row.name, row.user, row.folder, root.contextKey])
+  }
+
+  // "Suggest here": pin the highlighted entry to the focused window without
+  // acting on it, for a site whose title matches nothing it stores.
+  function pin(remember) {
+    if (!root.contextKey) return
+    if (remember) {
+      if (!root.cursorActive || root.selectedIndex < 0 || root.selectedIndex >= displayModel.count) return
+      var row = displayModel.get(root.selectedIndex)
+      if (!row) return
+      Quickshell.execDetached(["omarchy-rbw", "learn", root.contextKey, row.name])
+    } else {
+      Quickshell.execDetached(["omarchy-rbw", "forget", root.contextKey])
+    }
+    Qt.callLater(function() { root.reload() })
   }
 
   function syncVault() {
@@ -271,6 +325,7 @@ Item {
               case Qt.Key_U: root.act("copy-username"); event.accepted = true; return
               case Qt.Key_T: root.act("copy-totp"); event.accepted = true; return
               case Qt.Key_M: root.act("fields"); event.accepted = true; return
+              case Qt.Key_P: root.pin((event.modifiers & Qt.ShiftModifier) === 0); event.accepted = true; return
               case Qt.Key_S: root.syncVault(); event.accepted = true; return
               case Qt.Key_R: root.reload(); event.accepted = true; return
             }
@@ -345,6 +400,40 @@ Item {
           }
         }
 
+        // Why the top of the list looks the way it does. It is only drawn when
+        // there is something to explain.
+        Rectangle {
+          width: parent.width
+          height: root.bannerHeight
+          visible: root.showSuggestions
+          color: "transparent"
+
+          Text {
+            id: bannerGlyph
+            text: root.suggested.length > 0 && root.suggested[0].learned
+              ? root.learnedGlyph : root.suggestGlyph
+            color: root.selectedText
+            opacity: 0.9
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.bodySmall
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+          }
+
+          Text {
+            anchors.left: bannerGlyph.right
+            anchors.leftMargin: Style.space(7)
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text: "Suggested for " + root.contextLabel
+            color: root.selectedText
+            opacity: 0.9
+            font.family: root.fontFamily
+            font.pixelSize: Style.font.bodySmall
+            elide: Text.ElideRight
+          }
+        }
+
         Item {
           width: parent.width
           height: root.listHeight
@@ -363,6 +452,8 @@ Item {
               required property string name
               required property string sub
               required property string glyph
+              required property bool suggested
+              required property bool learned
 
               readonly property bool hasCursor: root.cursorActive && index === root.selectedIndex
 
@@ -385,10 +476,23 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
               }
 
+              Text {
+                id: markerText
+                text: parent.learned ? root.learnedGlyph : root.suggestGlyph
+                visible: parent.suggested
+                color: parent.hasCursor ? root.selectedText : root.foreground
+                opacity: parent.hasCursor ? 0.9 : 0.6
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.bodySmall
+                anchors.right: parent.right
+                anchors.rightMargin: Style.space(12)
+                anchors.verticalCenter: parent.verticalCenter
+              }
+
               Column {
                 anchors.left: glyphText.right
                 anchors.leftMargin: Style.space(6)
-                anchors.right: parent.right
+                anchors.right: parent.suggested ? markerText.left : parent.right
                 anchors.rightMargin: Style.space(10)
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Style.space(3)
