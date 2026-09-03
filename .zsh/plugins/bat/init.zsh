@@ -16,6 +16,4 @@
 
   export MANPAGER="sh -c 'col -bx | bat -l man -p'"
   export MANROFFOPT="-c"
-
-  alias cat="bat"
 } ${0:h}
