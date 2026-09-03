@@ -29,6 +29,6 @@ export ATAC_KEY_BINDINGS=~/.config/atac/keybinds.toml
 
 # export PATH="$HOME/.config/omarchy/bin:$PATH"
 
-. "$HOME/.local/share/../bin/env"
+[ -r "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
 
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init bash)"; fi

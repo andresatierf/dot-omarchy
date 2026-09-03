@@ -35,7 +35,6 @@ zstyle ':zim:path' paths \
     "/usr/local/go/bin" \
     "$HOME/go/bin" \
     "$HOME/.local/share/bob/nvim-bin" \
-    "/root/.local/bin" \
     "$HOME/.dotnet/tools"
 
 # prompt
@@ -80,17 +79,51 @@ unset key
 
 HISTFILE=~/.zsh_history
 
-# Show system information at login when not in multiplexer
-if { [ -t 0 ] && [ -z "$TMUX" ] && [ -z "$ZELLIJ" ]; } then
-    return 0
-    if type -p "neofetch" > /dev/null; then
-        neofetch
-        return 0
-    fi
-    if type -p "fastfetch" > /dev/null; then
-        fastfetch
-        return 0
-    fi
-fi
+# Show system information at login when not in a multiplexer.
+# Disabled: uncomment the block to re-enable. Do NOT disable it with a bare
+# `return` -- this is .zshrc top level, so returning aborts the rest of the
+# file, which silently skipped everything below (uv env, wt, ccommit).
+# if [ -t 0 ] && [ -z "$TMUX" ] && [ -z "$ZELLIJ" ]; then
+#     if (( ${+commands[fastfetch]} )); then
+#         fastfetch
+#     elif (( ${+commands[neofetch]} )); then
+#         neofetch
+#     fi
+# fi
 
-. "$HOME/.local/share/../bin/env"
+[ -r "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
+
+if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
+
+# -----------------------------
+# ccommit: AI-generated commit messages via claude (haiku)
+# -----------------------------
+ccommit() {
+    local diff
+    diff=$(git diff --cached)
+    if [[ -z "$diff" ]]; then
+        echo "ccommit: no staged changes" >&2
+        return 1
+    fi
+    local contributing="" contributing_file
+    for contributing_file in CONTRIBUTING.md contributing.md Contributing.md; do
+        if [[ -f "$contributing_file" ]]; then
+            contributing=$'\n\nFollow the contribution guidelines below:\n\n'"$(<"$contributing_file")"
+            break
+        fi
+    done
+    local msg
+    msg=$(printf '%s\n' "$diff" | claude -p --model haiku \
+        "Generate a concise git commit message for the following staged diff. Follow Conventional Commits (type(scope): subject). Output ONLY the commit message, no preamble, no code fences, no quotes.${contributing}") || return $?
+    msg=${msg//\`\`\`/}
+    msg=${msg##[[:space:]]}
+    msg=${msg%%[[:space:]]}
+    if [[ -z "$msg" ]]; then
+        echo "ccommit: empty message from claude" >&2
+        return 1
+    fi
+    echo "---"
+    echo "$msg"
+    echo "---"
+    git commit -m "$msg" "$@"
+}
