@@ -6,6 +6,7 @@
 #   omarchy-rbw sync       sync the vault
 #   omarchy-rbw unlock     unlock the vault
 #   omarchy-rbw lock       lock the vault
+#   omarchy-rbw status     print unlocked, locked or unavailable
 #   omarchy-rbw learn K N  suggest entry N whenever context key K is focused
 #   omarchy-rbw forget K   drop what was learned for context key K
 #
@@ -78,8 +79,17 @@ mask() {
 oneline() { printf '%s' "${1//$'\n'/ | }"; }
 
 ensure_unlocked() {
+  command -v rbw >/dev/null 2>&1 || die "rbw is not installed"
   rbw unlocked >/dev/null 2>&1 && return
   rbw unlock >/dev/null 2>&1 || die "Vault stayed locked"
+}
+
+# Lock state without prompting for anything. Callers that draw a window need
+# this before they draw it: the agent's pinentry is an ordinary toplevel, so it
+# opens *underneath* a layer-shell overlay and can never be answered.
+vault_status() {
+  command -v rbw >/dev/null 2>&1 || { printf 'unavailable'; return; }
+  if rbw unlocked >/dev/null 2>&1; then printf 'unlocked'; else printf 'locked'; fi
 }
 
 # Row composition lives in jq: it sorts by name, picks a glyph from the entry's
@@ -533,8 +543,17 @@ sync_vault() {
 # every secret stays in this short-lived process and never enters the shell.
 case "${1-}" in
   list)
-    ensure_unlocked
+    # Deliberately does not unlock: whoever asked for the list is about to draw
+    # it, and unlocking from here would put the prompt behind their window.
+    if [[ $(vault_status) != unlocked ]]; then
+      printf '{"context":{"key":"","label":"","muted":true},"suggested":[],"rows":[],"locked":true}\n'
+      exit 0
+    fi
     vault_context
+    exit 0 ;;
+  status)
+    vault_status
+    printf '\n'
     exit 0 ;;
   learn)
     assoc_write "${2-}" "${3-}"
@@ -571,12 +590,10 @@ case "${1-}" in
   unlock) ensure_unlocked; notify "Vault unlocked"; exit 0 ;;
   ""|pick) ;;
   -h|--help|help)
-    sed -n '3,16p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '3,17p' "$0" | sed 's/^# \{0,1\}//'
     exit 0 ;;
   *) echo "omarchy-rbw: unknown command '$1'" >&2; exit 2 ;;
 esac
-
-command -v rbw >/dev/null || die "rbw is not installed"
 
 ensure_unlocked
 pick_entry

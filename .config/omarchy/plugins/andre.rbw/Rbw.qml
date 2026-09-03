@@ -14,6 +14,11 @@ import qs.Ui
 // `omarchy-rbw list` also reports which entries suit the focused window, so the
 // credential you came for is usually the one already selected. Picking an entry
 // teaches that pairing; see the `learn` verb in omarchy-rbw.
+//
+// Nothing is drawn until the vault is known to be unlocked. rbw's agent asks
+// for the master password through pinentry, which is an ordinary toplevel
+// window: it would open *underneath* this overlay, where it cannot be answered
+// and cannot be seen.
 Item {
   id: root
 
@@ -30,6 +35,8 @@ Item {
   property string contextKey: ""
   property string contextLabel: ""
   property bool loading: false
+  property bool locked: false
+  property bool unlocking: false
 
   // Suggestions are an opening offer, not a filter: the moment you type, the
   // list is yours again and the banner gets out of the way.
@@ -78,6 +85,14 @@ Item {
   readonly property string learnedGlyph: "\uf005"
 
   function open(payloadJson) {
+    // A pinentry prompt is already on screen and waiting; a second summon must
+    // not stack another one behind it.
+    if (root.unlocking || statusProc.running) return
+    statusProc.collected = ""
+    statusProc.running = true
+  }
+
+  function reveal() {
     root.opened = true
     root.filterText = ""
     root.selectedIndex = 0
@@ -122,6 +137,7 @@ Item {
     root.suggested = (parsed && Array.isArray(parsed.suggested)) ? parsed.suggested : []
     root.contextKey = String(ctx.key || "")
     root.contextLabel = String(ctx.label || "")
+    root.locked = !!(parsed && parsed.locked)
     root.loading = false
     root.rebuildDisplay()
   }
@@ -253,6 +269,43 @@ Item {
   }
 
   ListModel { id: displayModel }
+
+  // The gate. `status` never prompts, so this cannot be what puts a dialog
+  // behind us.
+  Process {
+    id: statusProc
+    command: ["omarchy-rbw", "status"]
+    property string collected: ""
+    stdout: SplitParser {
+      onRead: function(data) { statusProc.collected += data }
+    }
+    onExited: function(exitCode, exitStatus) {
+      var state = statusProc.collected.trim()
+      if (state === "unlocked") {
+        root.reveal()
+      } else {
+        // Unlock with nothing of ours on screen, then open on the way back.
+        root.unlocking = true
+        unlockProc.running = true
+      }
+    }
+  }
+
+  Process {
+    id: unlockProc
+    command: ["omarchy-rbw", "unlock"]
+    onExited: function(exitCode, exitStatus) {
+      root.unlocking = false
+      if (exitCode === 0) {
+        root.reveal()
+      } else {
+        // A cancelled or failed unlock leaves nothing open: omarchy-rbw has
+        // already said why, and opening an empty picker would only be noise.
+        // The summon still marked us open in the shell, so hand that back.
+        root.dismiss()
+      }
+    }
+  }
 
   Process {
     id: listProc
@@ -537,12 +590,19 @@ Item {
           }
 
           Column {
+            // An explicit width, because the children below size themselves
+            // from it: a Column that took its width from them instead would
+            // resolve the loop to zero and draw nothing at all.
+            width: parent.width - Style.space(24)
             anchors.centerIn: parent
             spacing: Style.space(8)
             visible: displayModel.count === 0 && !root.loading
 
             Text {
-              text: ""
+              // Written as escapes: a literal private-use glyph does not
+              // survive every editor and tool that touches this file.
+              text: root.locked ? "\uf023"
+                : root.rows.length === 0 ? "\uf071" : "\uf002"
               color: root.selectedText
               opacity: 0.8
               font.family: root.fontFamily
@@ -552,9 +612,11 @@ Item {
             }
 
             Text {
-              text: root.rows.length === 0
-                ? "Vault unavailable — is rbw unlocked?"
-                : "No matches for “" + root.filterText + "”"
+              text: root.locked
+                ? "Vault is locked"
+                : root.rows.length === 0
+                  ? "Vault unavailable — is rbw configured?"
+                  : "No matches for “" + root.filterText + "”"
               color: root.foreground
               opacity: 0.7
               font.family: root.fontFamily
