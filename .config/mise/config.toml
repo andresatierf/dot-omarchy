@@ -1,10 +1,15 @@
 [settings]
 idiomatic_version_file_enable_tools = ["ruby"]
+trusted_config_paths = ["~/dev/urban-legends"]
 
 [settings.ruby]
 
+[settings.upgrade]
+auto_prune = false
+
 [tools]
 bun = "latest"
+claude = "latest"
 codex = "latest"
 gh = "latest"
 go = "latest"
