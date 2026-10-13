@@ -44,6 +44,6 @@ text/x-c=nvim.desktop
 text/x-c++=nvim.desktop
 application/xml=nvim.desktop
 text/xml=nvim.desktop
-x-scheme-handler/aether=aether-protocol-handler.desktop
+x-scheme-handler/aether=li.oever.aether.url-handler.desktop
 inode/directory=org.gnome.Nautilus.desktop
 x-scheme-handler/claude-cli=claude-code-url-handler.desktop
