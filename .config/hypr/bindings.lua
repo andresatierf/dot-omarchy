@@ -46,6 +46,11 @@ o.bind("SUPER + SHIFT + SLASH", "Passwords", "omarchy-shell shell toggle io.gith
 
 -- Windows --------------------------------------------------------------------
 
+-- Cycle the workspace layout through master, dwindle and scrolling instead of
+-- Omarchy's dwindle/scrolling toggle.
+hl.unbind("SUPER + L")
+o.bind("SUPER + L", "Cycle workspace layout", "omarchy-hyprland-workspace-layout-cycle")
+
 -- Resize the window to half the monitor. Sits beside Omarchy's Super+Home
 -- (restore width) and Super+Alt+Home (save width). The Lua resize dispatcher
 -- only takes pixel sizes, so work the half-monitor size out at press time.
